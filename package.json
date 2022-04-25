@@ -1,0 +1,30 @@
+{
+  "name": "web-asm-jit",
+  "version": "0.0.1",
+  "description": "A toy JIT using web assembly as the compilation target",
+  "main": "index.js",
+  "scripts": {
+    "build-web": "webpack && cp index.html build/",
+    "build-cli": "tsc node-main.ts --lib es2019,dom --esModuleInterop --moduleResolution node --outDir cli/",
+    "test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'tests/**/*.test.ts'",
+    "my-test": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'tests/pa3-my-tests.test.ts'"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@lezer/python": "^0.15.1",
+    "@lezer/common": "^0.15.12",
+    "ts-loader": "^8.0.11",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.1.2",
+    "wabt": "^1.0.20",
+    "webpack": "^5.10.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.2.14",
+    "@types/mocha": "^8.2.0",
+    "chai": "^4.2.0",
+    "mocha": "^9.2.2",
+    "webpack-cli": "^4.2.0"
+  }
+}

@@ -1,0 +1,105 @@
+<!doctype HTML>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Wathon: A Python-to-Wasm compiler">
+    <title>Wathon!</title>
+    <style>
+        body {
+            width: 100vw;
+            max-width: 100%;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header>* {
+            text-align: center;
+            margin: 0;
+            padding: 0.5rem;
+        }
+
+        main {
+            width: 100%;
+            height: 100%;
+        }
+
+        #code-form {
+            display: grid;
+            grid-template-columns: 2fr 3fr;
+            margin: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #code-form>fieldset {
+            border: 0
+        }
+
+        @media(max-width:900px) {
+            #code-form {
+                display: inline-block;
+            }
+
+            #user-code {
+                min-height: 20vh;
+            }
+        }
+
+        #code-form>* {
+            padding: 0.5rem;
+        }
+
+        #input-fields {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #user-code {
+            height: 100%;
+            resize: none;
+            font-family: monospace;
+        }
+
+        #output-fields>pre {
+            white-space: break-spaces;
+        }
+
+        #output-fields>label {
+            font-weight: bold
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Wathon: A Python-to-Wasm Compiler</h1>
+    </header>
+    <main>
+        <form id="code-form">
+            <fieldset id="input-fields">
+                <button id="run">Run!</button>
+                <label for="user-code" style="text-align:center">Enter Python code here:</label>
+                <textarea id="user-code"></textarea>
+            </fieldset>
+
+            <fieldset id="output-fields">
+                <label class="output label" for="output" hidden>Prints and final return value:</label>
+                <pre><output id="output"></output></pre>
+                <hr id="line" hidden>
+                <label class="output label" for="output" hidden>Generated code:</label>
+                <pre><code><output id="generated-code"></output></code></pre>
+            </fieldset>
+        </form>
+    </main>
+
+
+    <script src="https://cdn.jsdelivr.net/gh/AssemblyScript/wabt.js@1.0.20/index.js"></script>
+    <script>const wabt = WabtModule;</script>
+    <script src="webstart.js"></script>
+</body>
+
+</html>
