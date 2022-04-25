@@ -9,6 +9,7 @@ import {
   Type,
   VarDef,
   Literal,
+  ClassDef,
 } from "./ast";
 import {
   isVarDef,
@@ -18,6 +19,7 @@ import {
   toType,
   strToUniOp,
 } from "./parserUtils";
+import { Func } from "mocha";
 
 /**
  * Given a Python source program, return a Program AST (as defined in ast.ts)
@@ -48,14 +50,22 @@ export function traverse(c: TreeCursor, s: string): Program<null> {
   switch (c.node.type.name) {
     case "Script":
       let inTree = c.firstChild();
-      const typesInFirstSection = ["FunctionDefinition", "AssignStatement"];
+      const typesInFirstSection = [
+        "FunctionDefinition",
+        "AssignStatement",
+        "ClassDefinition",
+      ];
 
       let funcs = [];
       let vars = [];
+      let classes = [];
       while (inTree && typesInFirstSection.includes(c.node.type.name)) {
         // @ts-ignore
         if (c.node.type.name === "FunctionDefinition") {
           funcs.push(traverseFunDef(c, s));
+          // @ts-ignore
+        } else if (c.node.type.name === "ClassDefinition") {
+          classes.push(traverseClassDef(c, s));
           // @ts-ignore
         } else if (c.node.type.name === "AssignStatement") {
           if (!isVarDef(c)) break; // normal assign, get out of here!
@@ -64,21 +74,66 @@ export function traverse(c: TreeCursor, s: string): Program<null> {
         inTree = c.nextSibling();
       }
       if (!inTree) {
-        return { vars, funcs, body: [] };
+        return { vars, funcs, body: [], classes };
       }
 
       let body = [];
       do {
-        // @ts-ignore
-        if (c.node.type.name === "FunctionDefinition" || isVarDef(c))
+        if (
+          // @ts-ignore
+          c.node.type.name === "FunctionDefinition" ||
+          // @ts-ignore
+          c.node.type.name === "ClassDefinition" ||
+          isVarDef(c)
+        )
           throwParseError(c, s);
         body.push(traverseStmt(c, s));
       } while (c.nextSibling());
 
-      return { vars, funcs, body };
+      return { vars, funcs, body, classes };
     default:
       throwParseError(c, s);
   }
+}
+
+/**
+ * Given a TreeCUrsor pointing at a ClassDefinition, return a parsed ClassDef
+ * with no annotations. Guarantees `c` will point at the same element it started
+ * at.
+ *
+ * @param c TreeCursor at a class definition
+ * @param s source program
+ * @returns parsed ClassDef
+ */
+export function traverseClassDef(c: TreeCursor, s: string): ClassDef<null> {
+  c.firstChild(); // at "class"
+  c.nextSibling(); // at name
+  const name = s.substring(c.from, c.to);
+  c.nextSibling(); // at "object"
+  c.nextSibling(); // at body
+
+  c.firstChild(); // enter body, at ":"
+  let vars: VarDef<null>[] = [];
+  let methods: FunDef<null>[] = [];
+  while (c.nextSibling()) {
+    switch (c.node.type.name) {
+      case "AssignStatement": {
+        vars.push(traverseVarDef(c, s));
+        break;
+      }
+      case "FunctionDefinition":
+        throw new Error("TODO: functions in classes in parser!");
+      default:
+        throwParseError(c, s);
+    }
+  }
+
+  // Class must be non-empty
+  if (vars === [] && methods === []) throwParseError(c, s);
+  c.parent();
+  c.parent();
+
+  return { name, vars, methods };
 }
 
 /**

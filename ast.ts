@@ -1,10 +1,16 @@
 // TODO: returning in main body
-// TODO: actual return type of Program isn't always none
 export type Program<A> = {
   a?: A;
   vars: VarDef<A>[];
   funcs: FunDef<A>[];
+  classes: ClassDef<A>[];
   body: Stmt<A>[];
+};
+
+export type ClassDef<A> = {
+  name: string;
+  vars: VarDef<A>[];
+  methods: FunDef<A>[];
 };
 
 export type VarDef<A> = { a?: A; typedVar: TypedVar<A>; value: Literal<A> };
