@@ -413,6 +413,9 @@ export function traverseStmt(c: TreeCursor, s: string): Stmt<null> {
  */
 export function traverseExpr(c: TreeCursor, s: string): Expr<null> {
   switch (c.type.name) {
+    case "None": {
+      return { tag: "literal", value: { tag: "none" } };
+    }
     case "Number": {
       return {
         tag: "literal",

@@ -54,7 +54,7 @@ export const uniOpTypes: Map<UniOp, [Type[], Type]> = new Map([
 export const builtinTypes: Map<string, [Type[], Type]> = new Map([
   ["print_num", [["int"], "int"]],
   ["print_bool", [["bool"], "bool"]],
-  ["print_none", [["none"], "none"]],
+  ["print_none", [["none"], "int"]],
   ["abs", [["int"], "int"]],
   ["min", [["int", "int"], "int"]],
   ["max", [["int", "int"], "int"]],
