@@ -4,7 +4,7 @@
 // - https://developer.mozilla.org/en-US/docs/WebAssembly/Using_the_JavaScript_API
 
 import wabt from "wabt";
-import * as compiler from "./compiler";
+import { compile } from "./compiler";
 import { parse } from "./parser";
 import { tcProgram } from "./tc";
 
@@ -46,7 +46,7 @@ export async function run(
   const parsed = parse(source);
 
   const typeChecked = tcProgram(parsed);
-  const compiled = compiler.compile(typeChecked);
+  const compiled = compile(typeChecked);
 
   const importObject = config.importObject;
   const myModule = wabtInterface.parseWat("test.wat", compiled.wasmSource);
