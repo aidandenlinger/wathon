@@ -104,7 +104,7 @@ export function assignableTo(currType: Type, goalType: Type): boolean {
  */
 export function checkForInvalidReturns(stmts: Stmt<Type>[], expectedRet: Type) {
   const extras = stmts
-    .filter((s) => s.tag === "return" && s.a !== expectedRet)
+    .filter((s) => s.tag === "return" && !assignableTo(s.a, expectedRet))
     .map((s) => s.a);
 
   if (extras.length !== 0) {
@@ -115,8 +115,19 @@ export function checkForInvalidReturns(stmts: Stmt<Type>[], expectedRet: Type) {
 // ALL TYPE-CHECKING ERRORS
 
 /**
+ * Stringify the type.
  *
- * @param s
+ * @param t Type
+ * @returns Name of Type
+ */
+function typeStr(t: Type): string {
+  return isObject(t) ? t.class : t;
+}
+
+/**
+ * Throw an error when trying to assign to an invalid type.
+ *
+ * @param s Name of type
  */
 export function throwInvalidType(s: string) {
   throw new Error(
@@ -146,7 +157,9 @@ export function throwDupDecl(s: string) {
  */
 export function throwNotExpectedType(expected: Type, got: Type) {
   throw new Error(
-    `TYPE ERROR: Expected type \`${expected}\`; got type \`${got}\``
+    `TYPE ERROR: Expected type \`${typeStr(expected)}\`; got type \`${typeStr(
+      got
+    )}\``
   );
 }
 
@@ -165,7 +178,9 @@ export function throwNotExpectedTypeParam(
   pos: number
 ) {
   throw new Error(
-    `TYPE ERROR: Expected type \`${expected}\`; got type \`${got}\` in parameter ${pos}`
+    `TYPE ERROR: Expected type \`${typeStr(expected)}\`; got type \`${typeStr(
+      got
+    )}\` in parameter ${pos}`
   );
 }
 
@@ -210,7 +225,9 @@ export function throwNotAFunc(name: string) {
  */
 export function throwCondNotBool(actualType: Type) {
   throw new Error(
-    `TYPE ERROR: Condition expression cannot be of type \`${actualType}\``
+    `TYPE ERROR: Condition expression cannot be of type \`${typeStr(
+      actualType
+    )}\``
   );
 }
 
@@ -226,7 +243,7 @@ export function throwWrongNumArgs(expected: number, got: number) {
 
 export function throwWrongUniopArg(op: UniOp, arg: Type) {
   throw new Error(
-    `TYPE ERROR: Cannot apply operator \`${op}\` on type \`${arg}\``
+    `TYPE ERROR: Cannot apply operator \`${op}\` on type \`${typeStr(arg)}\``
   );
 }
 /**
@@ -238,6 +255,8 @@ export function throwWrongUniopArg(op: UniOp, arg: Type) {
  */
 export function throwWrongBinopArgs(op: BinOp, left: Type, right: Type) {
   throw new Error(
-    `TYPE ERROR: Cannot apply operator \`${op}\` on types \`${left}\` and \`${right}\``
+    `TYPE ERROR: Cannot apply operator \`${op}\` on types \`${typeStr(
+      left
+    )}\` and \`${typeStr(right)}\``
   );
 }

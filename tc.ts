@@ -177,7 +177,7 @@ export function tcFunDef(
   body
     .filter((s) => s.tag === "return")
     .forEach((s) => {
-      if (f.ret !== s.a) throwNotExpectedType(f.ret, s.a);
+      if (!assignableTo(s.a, f.ret)) throwNotExpectedType(f.ret, s.a);
     });
 
   // basic return check - if we say we're returning something, make sure we
@@ -222,7 +222,7 @@ export function tcStmt(
     case "assign": {
       if (!env.has(s.name)) throwNotAVar(s.name);
       const value = tcExpr(s.value, env, funcs, classes);
-      if (env.get(s.name) !== value.a)
+      if (!assignableTo(value.a, env.get(s.name)))
         throwNotExpectedType(env.get(s.name), value.a);
       return { ...s, value, a: value.a };
     }
@@ -238,7 +238,7 @@ export function tcStmt(
       return { ...s, expr, a: expr.a };
     case "if": {
       const cond: Expr<Type> = tcExpr(s.cond, env, funcs, classes);
-      if (cond.a !== "bool") throwCondNotBool(cond.a);
+      if (!assignableTo(cond.a, "bool")) throwCondNotBool(cond.a);
 
       const body = s.body.map((s) =>
         tcStmt(s, env, funcs, currentRet, classes)
@@ -251,7 +251,7 @@ export function tcStmt(
 
       if (s.elif !== undefined) {
         const elifCond = tcExpr(s.elif.cond, env, funcs, classes);
-        if (cond.a !== "bool") throwCondNotBool(cond.a);
+        if (!assignableTo(cond.a, "bool")) throwCondNotBool(cond.a);
         const elifBody = s.elif.body.map((s) =>
           tcStmt(s, env, funcs, currentRet, classes)
         );
@@ -291,7 +291,7 @@ export function tcStmt(
     }
     case "while": {
       const cond = tcExpr(s.cond, env, funcs, classes);
-      if (cond.a !== "bool") throwCondNotBool(cond.a);
+      if (!assignableTo(cond.a, "bool")) throwCondNotBool(cond.a);
       const body = s.body.map((s) =>
         tcStmt(s, env, funcs, currentRet, classes)
       );
@@ -333,6 +333,12 @@ export function tcExpr(
       if (!env.has(e.name)) throwNotAVar(e.name);
       return { ...e, a: env.get(e.name) };
     case "call": {
+      // Typechecked earlier to avoid variable/class name collisions
+      if (classes.has(e.name)) {
+        // Class constructor
+        if (e.args.length !== 0) throwWrongNumArgs(0, e.args.length);
+        return { ...e, a: { tag: "object", class: e.name } };
+      }
       const args = e.args.map((a) => tcExpr(a, env, funcs, classes));
       if (e.name === "print") {
         e.name = (() => {
@@ -352,7 +358,7 @@ export function tcExpr(
         throwWrongNumArgs(defArgs.length, e.args.length);
 
       args.forEach((arg, i) => {
-        if (defArgs[i] !== arg.a)
+        if (!assignableTo(arg.a, defArgs[i]))
           throwNotExpectedTypeParam(defArgs[i], arg.a, i);
       });
 

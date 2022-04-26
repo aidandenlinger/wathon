@@ -154,6 +154,16 @@ class C(object):
 C : int = 3`
   );
 
+  assertTCFail(
+    "Can't call class constructor with wrong num of args",
+    `
+class C(object):
+  x : int = 123
+  
+x : C = None
+x = C(123)`
+  );
+
   assertPrint(
     "Can instantiate a class without erroring",
     `
