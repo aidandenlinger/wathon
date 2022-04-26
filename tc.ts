@@ -1,4 +1,5 @@
 import {
+  ClassDef,
   Expr,
   FunDef,
   Literal,
@@ -73,6 +74,20 @@ export function tcProgram(p: Program<null>): Program<Type> {
 
   console.log(`Typechecked:\n${JSON.stringify(finalProg, null, 2)}`);
   return finalProg;
+}
+
+export function tcClass(
+  c: ClassDef<null>,
+  globals: BodyEnv,
+  funcs: FuncEnv
+): ClassDef<Type> {
+  const fields = c.fields.map((f) => tcVarDef(f));
+
+  // TODO: ensure first parameter is self with correct type, then only consider
+  // the rest of the params
+  const methods = c.methods.map((m) => tcFunDef(m, globals, funcs));
+
+  return { ...c, fields, methods };
 }
 
 /**

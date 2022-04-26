@@ -35,6 +35,7 @@ export function compile(p: Program<Type>): CompileResult {
   const body = codeGenStmts(p.body, blankEnv);
 
   const commands = `(module
+    (import "js" "mem" (memory 10))
     (func $print_num (import "imports" "print_num") (param i32) (result i32))
     (func $print_bool (import "imports" "print_bool") (param i32) (result i32))
     (func $print_none (import "imports" "print_none") (param i32) (result i32))
@@ -42,6 +43,8 @@ export function compile(p: Program<Type>): CompileResult {
     (func $min (import "imports" "min") (param i32 i32) (result i32))
     (func $max (import "imports" "max") (param i32 i32) (result i32))
     (func $pow (import "imports" "pow") (param i32 i32) (result i32))
+
+    (global $heap (mut i32) (i32.const 4))
     ${globals.join("\n")}
     ${funcs.join("\n\n")}
 

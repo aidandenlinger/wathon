@@ -28,10 +28,20 @@ if (typeof process !== "undefined") {
 export async function run(
   source: string,
   config: any
-): Promise<{ ans: number; source: string }> {
+): Promise<{ ans: number; source: string; mem: number[] }> {
+  // If empty body, don't panic, just don't do anything
   if (source === "") {
-    return { ans: undefined, source: "" };
+    return { ans: undefined, source: "", mem: [] };
   }
+
+  // Initalize memory in the importObject
+  config.importObject.js = {
+    mem: new WebAssembly.Memory({
+      initial: 10,
+      maximum: 100,
+    }),
+  };
+
   const wabtInterface = await wabt();
   const parsed = parse(source);
 
@@ -43,6 +53,15 @@ export async function run(
   var asBinary = myModule.toBinary({});
   var wasmModule = await WebAssembly.instantiate(asBinary.buffer, importObject);
   const result = (wasmModule.instance.exports.exported_func as any)();
+  const mem = (() => {
+    let i32 = new Uint32Array(config.importObject.js.mem.buffer);
+    return Array.from(i32);
+  })();
 
-  return { ans: result, source: compiled.wasmSource };
+  console.log(`Memory:`);
+  for (let i = 0; i < 10; i++) {
+    console.log(`${i}\t${mem[i]}`);
+  }
+
+  return { ans: result, source: compiled.wasmSource, mem };
 }
