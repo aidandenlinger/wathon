@@ -34,7 +34,7 @@ class C(object):
       classes: [
         {
           name: "C",
-          vars: [
+          fields: [
             {
               typedVar: { name: "x", type: "int" },
               value: { tag: "num", value: 123 },
@@ -61,7 +61,7 @@ print(z)
       classes: [
         {
           name: "C",
-          vars: [
+          fields: [
             {
               typedVar: { name: "x", type: "int" },
               value: { tag: "num", value: 123 },

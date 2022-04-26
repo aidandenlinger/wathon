@@ -9,7 +9,7 @@ export type Program<A> = {
 
 export type ClassDef<A> = {
   name: string;
-  vars: VarDef<A>[];
+  fields: VarDef<A>[];
   methods: FunDef<A>[];
 };
 

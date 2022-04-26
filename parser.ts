@@ -133,7 +133,7 @@ export function traverseClassDef(c: TreeCursor, s: string): ClassDef<null> {
   c.parent();
   c.parent();
 
-  return { name, vars, methods };
+  return { name, fields: vars, methods };
 }
 
 /**
