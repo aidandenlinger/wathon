@@ -145,6 +145,26 @@ x : C = None
     [""]
   );
 
+  assertTCFail(
+    "Can't declare a class and variable with same name",
+    `
+class C(object):
+  x : int = 123
+  
+C : int = 3`
+  );
+
+  assertPrint(
+    "Can instantiate a class without erroring",
+    `
+class C(object):
+  x : int = 123
+  
+x : C = None
+x = C()`,
+    [""]
+  );
+
   // Questions: print_none?
   // TODO: method that returns None in place of an object
   // TODO: class with no fields, but has methods!

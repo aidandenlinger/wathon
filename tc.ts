@@ -47,6 +47,7 @@ export function tcProgram(p: Program<null>): Program<Type> {
   const globals = new Map<string, Type>();
   vars.forEach((v) => {
     if (globals.has(v.typedVar.name)) throwDupDecl(v.typedVar.name);
+    if (classNames.has(v.typedVar.name)) throwDupDecl(v.typedVar.name);
     globals.set(v.typedVar.name, v.a);
   });
 
@@ -55,12 +56,15 @@ export function tcProgram(p: Program<null>): Program<Type> {
   // Now typecheck funcs
   p.funcs.forEach((func) => {
     if (funcEnv.has(func.name)) throwDupDecl(func.name);
+    if (classNames.has(func.name)) throwDupDecl(func.name);
     funcEnv.set(func.name, [func.params.map((p) => p.type), func.ret]);
   });
   const funcs = p.funcs.map((f) => tcFunDef(f, globals, funcEnv, classNames));
 
   // Typecheck body, which returns "none"
-  const body = p.body.map((s) => tcStmt(s, globals, funcEnv, "none"));
+  const body = p.body.map((s) =>
+    tcStmt(s, globals, funcEnv, "none", classNames)
+  );
 
   const finalStmtType = (() => {
     if (body.length === 0) {
@@ -167,7 +171,7 @@ export function tcFunDef(
     ...Array.from(locals.entries()),
   ]);
 
-  const body = f.body.map((s) => tcStmt(s, env, funcs, f.ret));
+  const body = f.body.map((s) => tcStmt(s, env, funcs, f.ret, classes));
 
   // Check each return to ensure it returns the function type
   body
@@ -211,31 +215,34 @@ export function tcStmt(
   s: Stmt<null>,
   env: BodyEnv,
   funcs: FuncEnv,
-  currentRet: Type
+  currentRet: Type,
+  classes: ClassEnv
 ): Stmt<Type> {
   switch (s.tag) {
     case "assign": {
       if (!env.has(s.name)) throwNotAVar(s.name);
-      const value = tcExpr(s.value, env, funcs);
+      const value = tcExpr(s.value, env, funcs, classes);
       if (env.get(s.name) !== value.a)
         throwNotExpectedType(env.get(s.name), value.a);
       return { ...s, value, a: value.a };
     }
     case "expr": {
-      const expr = tcExpr(s.expr, env, funcs);
+      const expr = tcExpr(s.expr, env, funcs, classes);
       return { ...s, expr, a: expr.a };
     }
     case "return":
       if (s.expr === undefined) {
         return { ...s, a: "none" };
       }
-      const expr = tcExpr(s.expr, env, funcs);
+      const expr = tcExpr(s.expr, env, funcs, classes);
       return { ...s, expr, a: expr.a };
     case "if": {
-      const cond: Expr<Type> = tcExpr(s.cond, env, funcs);
+      const cond: Expr<Type> = tcExpr(s.cond, env, funcs, classes);
       if (cond.a !== "bool") throwCondNotBool(cond.a);
 
-      const body = s.body.map((s) => tcStmt(s, env, funcs, currentRet));
+      const body = s.body.map((s) =>
+        tcStmt(s, env, funcs, currentRet, classes)
+      );
       checkForInvalidReturns(body, currentRet);
 
       // annotation is currently none: without an else branch this statement
@@ -243,10 +250,10 @@ export function tcStmt(
       const checkedStmt: Stmt<Type> = { tag: "if", cond, body, a: "none" };
 
       if (s.elif !== undefined) {
-        const elifCond = tcExpr(s.elif.cond, env, funcs);
+        const elifCond = tcExpr(s.elif.cond, env, funcs, classes);
         if (cond.a !== "bool") throwCondNotBool(cond.a);
         const elifBody = s.elif.body.map((s) =>
-          tcStmt(s, env, funcs, currentRet)
+          tcStmt(s, env, funcs, currentRet, classes)
         );
         checkForInvalidReturns(elifBody, currentRet);
 
@@ -254,7 +261,9 @@ export function tcStmt(
       }
 
       if (s.else !== undefined) {
-        const elseBody = s.else.map((s) => tcStmt(s, env, funcs, currentRet));
+        const elseBody = s.else.map((s) =>
+          tcStmt(s, env, funcs, currentRet, classes)
+        );
         checkForInvalidReturns(elseBody, currentRet);
 
         checkedStmt.else = elseBody;
@@ -281,9 +290,11 @@ export function tcStmt(
       return checkedStmt;
     }
     case "while": {
-      const cond = tcExpr(s.cond, env, funcs);
+      const cond = tcExpr(s.cond, env, funcs, classes);
       if (cond.a !== "bool") throwCondNotBool(cond.a);
-      const body = s.body.map((s) => tcStmt(s, env, funcs, currentRet));
+      const body = s.body.map((s) =>
+        tcStmt(s, env, funcs, currentRet, classes)
+      );
       checkForInvalidReturns(body, currentRet);
 
       // we can *never* assume that the while returns anything, since it may
@@ -311,7 +322,8 @@ export function tcStmt(
 export function tcExpr(
   e: Expr<null>,
   env: BodyEnv,
-  funcs: FuncEnv
+  funcs: FuncEnv,
+  classes: ClassEnv
 ): Expr<Type> {
   switch (e.tag) {
     case "literal":
@@ -321,7 +333,7 @@ export function tcExpr(
       if (!env.has(e.name)) throwNotAVar(e.name);
       return { ...e, a: env.get(e.name) };
     case "call": {
-      const args = e.args.map((a) => tcExpr(a, env, funcs));
+      const args = e.args.map((a) => tcExpr(a, env, funcs, classes));
       if (e.name === "print") {
         e.name = (() => {
           switch (args[0].a) {
@@ -348,7 +360,7 @@ export function tcExpr(
     }
     case "uniop": {
       const [acceptedTypes, retType] = uniOpTypes.get(e.op);
-      const arg = tcExpr(e.arg, env, funcs);
+      const arg = tcExpr(e.arg, env, funcs, classes);
 
       if (!acceptedTypes.includes(arg.a)) throwWrongUniopArg(e.op, arg.a);
 
@@ -356,8 +368,8 @@ export function tcExpr(
     }
     case "binop": {
       const [acceptedTypes, retType] = binopTypes.get(e.op);
-      const left = tcExpr(e.left, env, funcs);
-      const right = tcExpr(e.right, env, funcs);
+      const left = tcExpr(e.left, env, funcs, classes);
+      const right = tcExpr(e.right, env, funcs, classes);
 
       // Funky code to see if there isn't any entry that matches our left and
       // right types.
@@ -366,7 +378,7 @@ export function tcExpr(
       return { ...e, left, right, a: retType };
     }
     case "parenthesis": {
-      const expr = tcExpr(e.expr, env, funcs);
+      const expr = tcExpr(e.expr, env, funcs, classes);
       return { ...e, expr, a: expr.a };
     }
   }
