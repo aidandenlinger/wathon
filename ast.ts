@@ -76,4 +76,4 @@ export type Literal<A> =
   | { a?: A; tag: "bool"; value: boolean }
   | { a?: A; tag: "num"; value: number };
 
-export type Type = "int" | "bool" | "none";
+export type Type = "int" | "bool" | "none" | { tag: "object"; class: string };

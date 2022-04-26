@@ -21,6 +21,13 @@ before(function () {
   console.log = function () {};
 });
 
+let blankPrgm: Program<null> = {
+  vars: [],
+  funcs: [],
+  classes: [],
+  body: [],
+};
+
 describe("basic class lookup", () => {
   assertParse(
     "Parses a class with integers",
@@ -29,8 +36,7 @@ class C(object):
   x : int = 123
 `,
     {
-      vars: [],
-      funcs: [],
+      ...blankPrgm,
       classes: [
         {
           name: "C",
@@ -43,7 +49,6 @@ class C(object):
           methods: [],
         },
       ],
-      body: [],
     }
   );
 
@@ -56,8 +61,7 @@ class C(object):
 print(z)
 `,
     {
-      vars: [],
-      funcs: [],
+      ...blankPrgm,
       classes: [
         {
           name: "C",
@@ -82,4 +86,38 @@ print(z)
       ],
     }
   );
+
+  assertParse(
+    "Can parse vars as None/classes",
+    `
+x : C = None`,
+    {
+      ...blankPrgm,
+      vars: [
+        {
+          typedVar: { name: "x", type: { tag: "object", class: "C" } },
+          value: { tag: "none" },
+        },
+      ],
+    }
+  );
+
+  assertTC(
+    "Can typecheck vars as None/as classes",
+    `
+class C(object):
+  x : int = 123
+  
+x : C = None
+x`,
+    { tag: "object", class: "C" }
+  );
+
+  assertTCFail(
+    "Doesn't typecheck a nonexistant class",
+    `
+x : C = None`
+  );
+
+  // TODO: class with no fields, but has methods!
 });

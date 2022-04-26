@@ -176,6 +176,8 @@ export function traverseVarDef(c: TreeCursor, s: string): VarDef<null> {
         return { tag: "num", value: Number(valStr) };
       case "bool":
         return { tag: "bool", value: valStr === "True" };
+      case "none":
+        return { tag: "none" };
       default:
         throwParseError(c, s);
     }

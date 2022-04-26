@@ -14,7 +14,15 @@ type CompileResult = {
  * @returns WAT program
  */
 export function compile(p: Program<Type>): CompileResult {
-  const globals = p.vars.map(codeGenGlobalVarDef);
+  const globals = p.vars
+    .concat([
+      {
+        typedVar: { name: "heap", type: "int" },
+        value: { tag: "num", value: 4 },
+        a: "int",
+      },
+    ])
+    .map(codeGenGlobalVarDef);
   const funcs = p.funcs.map(codeGenFunDef).flat();
 
   // all needs to be reworked with var inits and globals
@@ -44,7 +52,6 @@ export function compile(p: Program<Type>): CompileResult {
     (func $max (import "imports" "max") (param i32 i32) (result i32))
     (func $pow (import "imports" "pow") (param i32 i32) (result i32))
 
-    (global $heap (mut i32) (i32.const 4))
     ${globals.join("\n")}
     ${funcs.join("\n\n")}
 

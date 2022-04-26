@@ -67,8 +67,10 @@ export function toType(s: string): Type {
       return "int";
     case "bool":
       return "bool";
+    case "none":
+      return "none";
     default:
-      throw new Error(`Invalid type annotation; there is no class named: ${s}`);
+      return { tag: "object", class: s };
   }
 }
 
