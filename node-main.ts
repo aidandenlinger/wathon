@@ -1,10 +1,8 @@
 import { run } from "./runner";
-import { defaultImports } from "./constants";
 
 function cli() {
   const importObject = {
     imports: {
-      ...defaultImports,
       // we typically define print to mean logging to the console. To make testing
       // the compiler easier, we define print so it logs to a string object.
       //  We can then examine output to see what would have been printed in the
@@ -23,6 +21,10 @@ function cli() {
       print_none: () => {
         console.log("None");
       },
+      abs: Math.abs,
+      pow: Math.pow,
+      min: Math.min,
+      max: Math.max,
     },
 
     output: "",

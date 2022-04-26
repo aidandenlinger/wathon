@@ -1,5 +1,4 @@
 import { run } from "./runner";
-import { defaultImports } from "./constants";
 
 document.addEventListener("DOMContentLoaded", async () => {
   function display(arg: string) {
@@ -9,7 +8,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const importObject = {
     imports: {
-      ...defaultImports,
       print_num: (arg: any) => {
         console.log("Logging num from WASM: ", arg);
         display(String(arg));
