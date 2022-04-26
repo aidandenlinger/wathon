@@ -119,5 +119,35 @@ x`,
 x : C = None`
   );
 
+  assertTC(
+    "allows for classes to be used out of order in var definitions",
+    `
+x : C = None
+
+class C(object):
+  dig : D = None
+  
+class D(object):
+  e : int =123
+  
+x`,
+    { tag: "object", class: "C" }
+  );
+
+  assertPrint(
+    "Can assign variables to None",
+    `
+class C(object):
+  x : int = 123
+  
+x : C = None
+`,
+    [""]
+  );
+
+  // Questions: print_none?
+  // TODO: method that returns None in place of an object
   // TODO: class with no fields, but has methods!
+  // TODO: calls like r1.mul(None), None is an acceptable parameter for a class
+  // but should cause a runtime error!
 });

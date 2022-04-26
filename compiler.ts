@@ -82,6 +82,8 @@ function codeGenGlobalVarDef(v: VarDef<Type>): string {
         return v.value.value;
       case "bool":
         return v.value.value ? "1" : "0";
+      case "none":
+        return 0;
     }
   })();
   return `(global $${v.typedVar.name} (mut i32) (i32.const ${val}))`;
@@ -335,6 +337,6 @@ function codeGenLiteral(l: Literal<Type>): string[] {
     case "bool":
       return [`(i32.const ${l.value ? "1" : "0"})`];
     case "none":
-      return [];
+      return [`(i32.const 0)`];
   }
 }

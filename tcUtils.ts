@@ -62,6 +62,39 @@ export const builtinTypes: Map<string, [Type[], Type]> = new Map([
 ]);
 
 /**
+ * Check if t is an object, by ensuring it isn't anything else. This is bad,
+ * there's probably a better way to do this.
+ *
+ * @param t Type
+ * @returns if it is an object
+ */
+export function isObject(t: Type): t is { tag: "object"; class: string } {
+  return t !== "int" && t !== "bool" && t !== "none";
+}
+
+/**
+ * Return if `currType` can be assigned to `goalType`.
+ *
+ * Ex, a `None` can be assigned to any type `Object`.
+ *
+ * @param currType Type we have
+ * @param goalType Type we want
+ * @return if `currType` is assignable to `goalType`
+ */
+export function assignableTo(currType: Type, goalType: Type): boolean {
+  if (!isObject(goalType))
+    // No deep rules for these primitive types, either it's right or it's wrong
+    return currType === goalType;
+
+  // Now we know that goalType is of type object.
+  // We must either be none, or have the same class.
+  if (currType === "int" || currType === "bool") return false;
+  if (currType === "none") return true;
+
+  return currType.class === goalType.class;
+}
+
+/**
  * Checks a grouping of statements to ensure any returns matches the expected
  * return type, throws otherwise.
  *
@@ -80,6 +113,16 @@ export function checkForInvalidReturns(stmts: Stmt<Type>[], expectedRet: Type) {
 }
 
 // ALL TYPE-CHECKING ERRORS
+
+/**
+ *
+ * @param s
+ */
+export function throwInvalidType(s: string) {
+  throw new Error(
+    `TYPE ERROR: Invalid type annotation; there is no class named: ${s}`
+  );
+}
 
 /**
  * Throw an error for when a variable is declared twice in the same scope.

@@ -24,10 +24,14 @@ import {
   throwWrongBinopArgs,
   uniOpTypes,
   throwWrongUniopArg,
+  assignableTo,
+  throwInvalidType,
+  isObject,
 } from "./tcUtils";
 
 type BodyEnv = Map<string, Type>;
 type FuncEnv = Map<string, [Type[], Type]>;
+type ClassEnv = Set<string>;
 
 /**
  * Given a Program AST, annotates it with proper types, throws if not typesafe.
@@ -38,7 +42,8 @@ type FuncEnv = Map<string, [Type[], Type]>;
  */
 export function tcProgram(p: Program<null>): Program<Type> {
   // Typecheck all globals
-  const vars = p.vars.map((v) => tcVarDef(v));
+  const classNames = new Set(p.classes.map((c) => c.name));
+  const vars = p.vars.map((v) => tcVarDef(v, classNames));
   const globals = new Map<string, Type>();
   vars.forEach((v) => {
     if (globals.has(v.typedVar.name)) throwDupDecl(v.typedVar.name);
@@ -52,7 +57,7 @@ export function tcProgram(p: Program<null>): Program<Type> {
     if (funcEnv.has(func.name)) throwDupDecl(func.name);
     funcEnv.set(func.name, [func.params.map((p) => p.type), func.ret]);
   });
-  const funcs = p.funcs.map((f) => tcFunDef(f, globals, funcEnv));
+  const funcs = p.funcs.map((f) => tcFunDef(f, globals, funcEnv, classNames));
 
   // Typecheck body, which returns "none"
   const body = p.body.map((s) => tcStmt(s, globals, funcEnv, "none"));
@@ -79,13 +84,14 @@ export function tcProgram(p: Program<null>): Program<Type> {
 export function tcClass(
   c: ClassDef<null>,
   globals: BodyEnv,
-  funcs: FuncEnv
+  funcs: FuncEnv,
+  classes: ClassEnv
 ): ClassDef<Type> {
-  const fields = c.fields.map((f) => tcVarDef(f));
+  const fields = c.fields.map((f) => tcVarDef(f, classes));
 
   // TODO: ensure first parameter is self with correct type, then only consider
   // the rest of the params
-  const methods = c.methods.map((m) => tcFunDef(m, globals, funcs));
+  const methods = c.methods.map((m) => tcFunDef(m, globals, funcs, classes));
 
   return { ...c, fields, methods };
 }
@@ -97,20 +103,27 @@ export function tcClass(
  * @returns VarDef with annotations
  * @throws if typedVar's type isn't literal's type
  */
-export function tcVarDef(v: VarDef<null>): VarDef<Type> {
-  const typedVar = tcTypedVar(v.typedVar);
+export function tcVarDef(v: VarDef<null>, classes: ClassEnv): VarDef<Type> {
+  const typedVar = tcTypedVar(v.typedVar, classes);
   const value = tcLiteral(v.value);
-  if (typedVar.a !== value.a) throwNotExpectedType(typedVar.a, value.a);
+  if (!assignableTo(value.a, typedVar.a))
+    throwNotExpectedType(typedVar.a, value.a);
 
   return { ...v, typedVar, value, a: typedVar.a };
 }
 /**
- * Annotates TypedVar, no error condiitons possible.
+ * Checks TypeVar to make sure type is valid
  *
  * @param v TypedVar without annotations
  * @returns annotated TypedVar
+ * @throws if assigning to a nonexistant class
  */
-export function tcTypedVar(v: TypedVar<null>): TypedVar<Type> {
+export function tcTypedVar(
+  v: TypedVar<null>,
+  classes: ClassEnv
+): TypedVar<Type> {
+  if (isObject(v.type) && !classes.has(v.type.class))
+    throwInvalidType(v.type.class);
   return { ...v, a: v.type };
 }
 
@@ -129,19 +142,20 @@ export function tcTypedVar(v: TypedVar<null>): TypedVar<Type> {
 export function tcFunDef(
   f: FunDef<null>,
   globals: BodyEnv,
-  funcs: FuncEnv
+  funcs: FuncEnv,
+  classes: ClassEnv
 ): FunDef<Type> {
   const locals: BodyEnv = new Map();
 
   // add params to locals and check for duplicates
-  const params = f.params.map(tcTypedVar);
+  const params = f.params.map((p) => tcTypedVar(p, classes));
   params.forEach((p) => {
     if (locals.has(p.name)) throwDupDecl(p.name);
     locals.set(p.name, p.a);
   });
 
   // add local variables to locals and check for duplicates
-  const inits = f.inits.map(tcVarDef);
+  const inits = f.inits.map((i) => tcVarDef(i, classes));
   inits.forEach((i) => {
     if (locals.has(i.typedVar.name)) throwDupDecl(i.typedVar.name);
     locals.set(i.typedVar.name, i.typedVar.type);
@@ -169,7 +183,7 @@ export function tcFunDef(
   if (
     f.ret !== "none" &&
     body.filter((s) => s.tag === "return").length === 0 &&
-    body.filter((s) => s.tag === "if" && s.a === f.ret).length === 0
+    body.filter((s) => s.tag === "if" && assignableTo(s.a, f.ret)).length === 0
   ) {
     throwMustReturn(f.name);
   }
