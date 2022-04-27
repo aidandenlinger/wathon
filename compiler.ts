@@ -42,7 +42,7 @@ export function compile(p: Program<Type>): CompileResult {
 
   // all needs to be reworked with var inits and globals
   const scratchVar: string = `(local $$scratch i32)`;
-  const localDefines = ["\t" + scratchVar];
+  const localDefines = [scratchVar];
 
   var returnType = "";
   var returnExpr = "";
@@ -67,15 +67,15 @@ export function compile(p: Program<Type>): CompileResult {
     (func $max (import "imports" "max") (param i32 i32) (result i32))
     (func $pow (import "imports" "pow") (param i32 i32) (result i32))
 
-    ${globals.join("\n")}
+    ${globals.join("\n    ")}
     ${funcs.join("\n\n")}
 
     (func (export "exported_func") ${returnType}
-${localDefines.join("\n")}
-${body.join("\n")}
-${"\t" + returnExpr}
+        ${localDefines.join("        ")}
+        ${body.join("\n        ")}
+        ${returnExpr}
     )
-    )`;
+)`;
   console.log(`Generated:\n${commands}`);
 
   return {
@@ -193,7 +193,9 @@ function codeGenStmt(
       result.push(...codeGenExpr(stmt.cond, locals, classes)); // cond on stack
       result.push(`(if`, `(then`);
 
-      const instrs = codeGenStmts(stmt.body, locals, classes);
+      const instrs = codeGenStmts(stmt.body, locals, classes).map(
+        (x) => "    " + x
+      );
 
       result.push(...instrs);
       result.push(`)`); // close the then
@@ -203,7 +205,9 @@ function codeGenStmt(
         result.push(...codeGenExpr(stmt.elif.cond, locals, classes));
         result.push(`(if`, `(then`);
 
-        const instrs = codeGenStmts(stmt.elif.body, locals, classes);
+        const instrs = codeGenStmts(stmt.elif.body, locals, classes).map(
+          (x) => x + "    "
+        );
 
         result.push(...instrs);
         result.push(`)`); // close then
@@ -216,7 +220,9 @@ function codeGenStmt(
         result.push(`)`); // close if
         result.push(`)`); // close else branch
       } else if (stmt.else !== undefined) {
-        const instrs = codeGenElse(stmt, locals, classes);
+        const instrs = codeGenElse(stmt, locals, classes).map(
+          (x) => "    " + x
+        );
         result.push(...instrs);
       }
 
@@ -235,10 +241,10 @@ function codeGenStmt(
       return [
         `(block
            (loop
-            ${cond.join("\n\t\t")}
+            ${cond.join("\n    ")}
             (i32.xor (i32.const 1))
             (br_if 1)
-            ${body.join("\n\t\t")}
+            ${body.join("\n    ")}
             (br 0)
            )
           )`,
