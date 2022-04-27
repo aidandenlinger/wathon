@@ -59,8 +59,8 @@ export async function run(
   })();
 
   console.log(`Memory:`);
-  for (let i = 0; i < 10; i++) {
-    console.log(`${i}\t${mem[i]}`);
+  for (let i = 1; i < 11; i++) {
+    console.log(`${i * 4}\t${mem[i]}`);
   }
 
   return { ans: result, source: compiled.wasmSource, mem };

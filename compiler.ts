@@ -1,7 +1,17 @@
-import { Stmt, Expr, Literal, Program, FunDef, Type, VarDef } from "./ast";
+import {
+  Stmt,
+  Expr,
+  Literal,
+  Program,
+  FunDef,
+  Type,
+  VarDef,
+  ClassDef,
+} from "./ast";
 import { binOpToInstr, uniOpToInstr } from "./compilerUtils";
 
 type LocalEnv = Map<string, boolean>;
+type ClassEnv = Map<string, ClassDef<Type>>;
 
 type CompileResult = {
   wasmSource: string;
@@ -23,7 +33,11 @@ export function compile(p: Program<Type>): CompileResult {
       },
     ])
     .map(codeGenGlobalVarDef);
-  const funcs = p.funcs.map(codeGenFunDef).flat();
+
+  const classes = new Map();
+  p.classes.forEach((c) => classes.set(c.name, c));
+
+  const funcs = p.funcs.map((f) => codeGenFunDef(f, classes)).flat();
 
   // all needs to be reworked with var inits and globals
   const scratchVar: string = `(local $$scratch i32)`;
@@ -40,7 +54,7 @@ export function compile(p: Program<Type>): CompileResult {
   }
 
   const blankEnv = new Map();
-  const body = codeGenStmts(p.body, blankEnv);
+  const body = codeGenStmts(p.body, blankEnv, classes);
 
   const commands = `(module
     (import "js" "mem" (memory 10))
@@ -95,7 +109,7 @@ function codeGenGlobalVarDef(v: VarDef<Type>): string {
  * @param fun Annotated FunDef
  * @returns WAT instructions for the function
  */
-function codeGenFunDef(fun: FunDef<Type>): string[] {
+function codeGenFunDef(fun: FunDef<Type>, classes: ClassEnv): string[] {
   const locals = new Map();
   fun.params.forEach((p) => locals.set(p.name, true));
   fun.inits.forEach((i) => locals.set(i.typedVar.name, true));
@@ -116,7 +130,7 @@ function codeGenFunDef(fun: FunDef<Type>): string[] {
     })
   );
 
-  const bodyInstrs = codeGenStmts(fun.body, locals);
+  const bodyInstrs = codeGenStmts(fun.body, locals, classes);
 
   const retInstr = (() => {
     if (fun.ret === "none") {
@@ -150,14 +164,18 @@ ${dummyVal}
  * @param locals Map of local variables, to decide between local and global .set
  * @returns WAT instructions for the Stmt, and updated number of while loops
  */
-function codeGenStmt(stmt: Stmt<Type>, locals: LocalEnv): string[] {
+function codeGenStmt(
+  stmt: Stmt<Type>,
+  locals: LocalEnv,
+  classes: ClassEnv
+): string[] {
   switch (stmt.tag) {
     case "assign":
       const setInstr = locals.has(stmt.name) ? "local.set" : "global.set";
-      const valStmts = codeGenExpr(stmt.value, locals);
+      const valStmts = codeGenExpr(stmt.value, locals, classes);
       return valStmts.concat([`(${setInstr} $${stmt.name})`]);
     case "expr":
-      const exprStmts = codeGenExpr(stmt.expr, locals);
+      const exprStmts = codeGenExpr(stmt.expr, locals, classes);
       if (stmt.expr.tag == "call" && stmt.expr.a == "none") {
         // if the function returns None, don't try to save its value since there is none!
         return exprStmts;
@@ -165,39 +183,39 @@ function codeGenStmt(stmt: Stmt<Type>, locals: LocalEnv): string[] {
       return exprStmts.concat(`(local.set $$scratch)`);
     case "return":
       const returnStmts =
-        stmt.expr === undefined ? [] : codeGenExpr(stmt.expr, locals);
+        stmt.expr === undefined ? [] : codeGenExpr(stmt.expr, locals, classes);
       return returnStmts.concat([`(return)`]);
     case "pass":
       return [];
     case "if": {
       const result: string[] = [];
-      result.push(...codeGenExpr(stmt.cond, locals)); // cond on stack
+      result.push(...codeGenExpr(stmt.cond, locals, classes)); // cond on stack
       result.push(`(if`, `(then`);
 
-      const instrs = codeGenStmts(stmt.body, locals);
+      const instrs = codeGenStmts(stmt.body, locals, classes);
 
       result.push(...instrs);
       result.push(`)`); // close the then
 
       if (stmt.elif !== undefined) {
         result.push(`(else`);
-        result.push(...codeGenExpr(stmt.elif.cond, locals));
+        result.push(...codeGenExpr(stmt.elif.cond, locals, classes));
         result.push(`(if`, `(then`);
 
-        const instrs = codeGenStmts(stmt.elif.body, locals);
+        const instrs = codeGenStmts(stmt.elif.body, locals, classes);
 
         result.push(...instrs);
         result.push(`)`); // close then
 
         if (stmt.else !== undefined) {
-          const instrs = codeGenElse(stmt, locals);
+          const instrs = codeGenElse(stmt, locals, classes);
           result.push(...instrs);
         }
 
         result.push(`)`); // close if
         result.push(`)`); // close else branch
       } else if (stmt.else !== undefined) {
-        const instrs = codeGenElse(stmt, locals);
+        const instrs = codeGenElse(stmt, locals, classes);
         result.push(...instrs);
       }
 
@@ -205,8 +223,8 @@ function codeGenStmt(stmt: Stmt<Type>, locals: LocalEnv): string[] {
       return result;
     }
     case "while": {
-      const cond = codeGenExpr(stmt.cond, locals);
-      const body = codeGenStmts(stmt.body, locals);
+      const cond = codeGenExpr(stmt.cond, locals, classes);
+      const body = codeGenStmts(stmt.body, locals, classes);
 
       // We use an xor to flip the condition, since br_if will branch if
       // the condition is true.
@@ -241,14 +259,18 @@ function codeGenStmt(stmt: Stmt<Type>, locals: LocalEnv): string[] {
  * @param locals local variables the environment
  * @returns the compiled instructions for the else body
  */
-function codeGenElse(stmt: Stmt<Type>, locals: LocalEnv): string[] {
+function codeGenElse(
+  stmt: Stmt<Type>,
+  locals: LocalEnv,
+  classes: ClassEnv
+): string[] {
   // Make Typescript happy - we've already checked this, this function is only
   // called when we're evaluating an if statement
   if (stmt.tag === "if" && stmt.else !== undefined) {
     const result = [];
     result.push(`(else`);
 
-    const instrs = codeGenStmts(stmt.else, locals);
+    const instrs = codeGenStmts(stmt.else, locals, classes);
 
     result.push(...instrs);
 
@@ -270,8 +292,12 @@ function codeGenElse(stmt: Stmt<Type>, locals: LocalEnv): string[] {
  * @param locals the local variables the stmts have access to
  * @returns instructions for the stmts and the new whileCount
  */
-function codeGenStmts(stmts: Stmt<Type>[], locals: LocalEnv): string[] {
-  return stmts.map((s) => codeGenStmt(s, locals)).flat();
+function codeGenStmts(
+  stmts: Stmt<Type>[],
+  locals: LocalEnv,
+  classes: ClassEnv
+): string[] {
+  return stmts.map((s) => codeGenStmt(s, locals, classes)).flat();
 }
 
 /**
@@ -282,12 +308,43 @@ function codeGenStmts(stmts: Stmt<Type>[], locals: LocalEnv): string[] {
  * @returns WAT instructions for the expr
  * @throws if I forgot to implement a binop
  */
-function codeGenExpr(expr: Expr<Type>, locals: LocalEnv): string[] {
+function codeGenExpr(
+  expr: Expr<Type>,
+  locals: LocalEnv,
+  classes: ClassEnv
+): string[] {
   switch (expr.tag) {
     case "call": {
+      if (classes.has(expr.name)) {
+        // Class constructor
+        const initvals: string[] = [];
+        const classdata = classes.get(expr.name);
+        classdata.fields.forEach((f, index) => {
+          const offset = index * 4;
+
+          // Get the value of the heap, add to get to our offset, get our value,
+          // store it there
+          initvals.push(
+            `(global.get $heap)`,
+            `(i32.add (i32.const ${offset}))`,
+            ...codeGenLiteral(f.value),
+            `(i32.store)`
+          );
+        });
+
+        // Finally, get the value of the start of our item
+        // then bump the heap up by the number of fields * 4 to the next free
+        // area
+        return initvals.concat(
+          `(global.get $heap)`,
+          `(global.set $heap (i32.add (global.get $heap) (i32.const ${
+            classdata.fields.length * 4
+          })))`
+        );
+      }
       // typecheck has already replaced "print" with its type specific print
       return expr.args
-        .map((a) => codeGenExpr(a, locals))
+        .map((a) => codeGenExpr(a, locals, classes))
         .flat()
         .concat([`(call $${expr.name})`]);
     }
@@ -302,7 +359,7 @@ function codeGenExpr(expr: Expr<Type>, locals: LocalEnv): string[] {
       if (!uniOpToInstr.has(expr.op)) {
         throw new Error(`TODO: ${expr.op} unimplemented in compiler`);
       }
-      const arg = codeGenExpr(expr.arg, locals);
+      const arg = codeGenExpr(expr.arg, locals, classes);
       return [...arg, uniOpToInstr.get(expr.op)];
     }
     case "binop": {
@@ -310,8 +367,8 @@ function codeGenExpr(expr: Expr<Type>, locals: LocalEnv): string[] {
         throw new Error(`TODO: ${expr.op} unimplemented in compiler`);
       }
 
-      const leftStmts = codeGenExpr(expr.left, locals);
-      const rightStmts = codeGenExpr(expr.right, locals);
+      const leftStmts = codeGenExpr(expr.left, locals, classes);
+      const rightStmts = codeGenExpr(expr.right, locals, classes);
       return [
         ...leftStmts, // put left on stack
         ...rightStmts, // put right on stack
@@ -319,7 +376,7 @@ function codeGenExpr(expr: Expr<Type>, locals: LocalEnv): string[] {
       ];
     }
     case "parenthesis": {
-      return codeGenExpr(expr.expr, locals);
+      return codeGenExpr(expr.expr, locals, classes);
     }
   }
 }

@@ -71,6 +71,12 @@
         #output-fields>label {
             font-weight: bold
         }
+
+        #memory th,
+        #memory td {
+            text-align: center;
+            padding: 0.25rem;
+        }
     </style>
 </head>
 
@@ -89,7 +95,36 @@
             <fieldset id="output-fields">
                 <label class="output label" for="output" hidden>Prints and final return value:</label>
                 <pre><output id="output"></output></pre>
-                <hr id="line" hidden>
+                <hr class="line" hidden>
+                <table id="memory" hidden>
+                    <tr>
+                        <th>Address</th>
+                        <th>4</th>
+                        <th>8</th>
+                        <th>12</th>
+                        <th>16</th>
+                        <th>20</th>
+                        <th>24</th>
+                        <th>28</th>
+                        <th>32</th>
+                        <th>36</th>
+                        <th>40</th>
+                    </tr>
+                    <tr id="mem-values">
+                        <th>Memory</th>
+                        <td><output></output></td>
+                        <td><output></output></td>
+                        <td><output></output></td>
+                        <td><output></output></td>
+                        <td><output></output></td>
+                        <td><output></output></td>
+                        <td><output></output></td>
+                        <td><output></output></td>
+                        <td><output></output></td>
+                        <td><output></output></td>
+                    </tr>
+                </table>
+                <hr class="line" hidden>
                 <label class="output label" for="output" hidden>Generated code:</label>
                 <pre><code><output id="generated-code"></output></code></pre>
             </fieldset>

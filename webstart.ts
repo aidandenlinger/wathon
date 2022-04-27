@@ -43,7 +43,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       "output label"
     ) as HTMLCollectionOf<HTMLElement>
   );
-  const line = document.getElementById("line");
+  const lines = Array.from(
+    document.getElementsByClassName("line") as HTMLCollectionOf<HTMLElement>
+  );
+  const memTable = document.getElementById("memory");
+  const memValues = document.getElementById("mem-values");
 
   document.getElementById("run").addEventListener("click", function () {
     const program = (
@@ -55,15 +59,22 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     run(program, { importObject })
       .then((r) => {
-        line.hidden = false;
+        lines.forEach((l) => (l.hidden = false));
+        memTable.hidden = false;
         generatedCodeLabels.forEach((label) => (label.hidden = false));
         generatedCodeBox.innerText = r.source;
         output.textContent += `Final return value: ${r.ans}`;
         output.setAttribute("style", "color:black");
+        for (let i = 1; i < 11; i++) {
+          (
+            memValues.childNodes[2 * i + 1].childNodes[0] as HTMLOutputElement
+          ).innerText = String(r.mem[i]);
+        }
         console.log("run finished");
       })
       .catch((e) => {
-        line.hidden = true;
+        lines.forEach((l) => (l.hidden = true));
+        memTable.hidden = true;
         generatedCodeLabels.forEach((label) => (label.hidden = true));
         generatedCodeBox.innerHTML = "";
         output.textContent = String(e);
