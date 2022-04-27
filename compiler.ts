@@ -9,6 +9,7 @@ import {
   ClassDef,
 } from "./ast";
 import { binOpToInstr, uniOpToInstr } from "./compilerUtils";
+import { isObject } from "./tcUtils";
 
 type LocalEnv = Map<string, boolean>;
 type ClassEnv = Map<string, ClassDef<Type>>;
@@ -378,6 +379,22 @@ function codeGenExpr(
     case "parenthesis": {
       return codeGenExpr(expr.expr, locals, classes);
     }
+    case "getfield":
+      const objStmts = codeGenExpr(expr.obj, locals, classes);
+      if (!isObject(expr.obj.a))
+        throw new Error(
+          `This should be impossible - at compiler, getting field of nonobject ${expr.obj}`
+        );
+      const classdata = classes.get(expr.obj.a.class);
+      const fieldIndex = classdata.fields.findIndex(
+        (f) => f.typedVar.name === expr.name
+      );
+
+      return [
+        ...objStmts,
+        `(i32.add (i32.const ${fieldIndex * 4}))`,
+        `(i32.load)`,
+      ];
   }
 }
 
