@@ -1,4 +1,5 @@
-import { BinOp, UniOp } from "./ast";
+import { BinOp, ClassDef, Type, UniOp } from "./ast";
+import { isObject } from "./tcUtils";
 
 /**
  * Map of BinOps to their cooresponding WAT instructions. If it's not so simple,
@@ -22,3 +23,31 @@ export const uniOpToInstr: Map<UniOp, string> = new Map([
   [UniOp.NEG, "(i32.mul (i32.const -1))"],
   [UniOp.NOT, "(i32.xor (i32.const 1))"],
 ]);
+
+type ClassEnv = Map<string, ClassDef<Type>>;
+
+/**
+ * Find the index for a field based off an object type, a field, and a classenv.
+ *
+ * @param t An object type
+ * @param fieldName the Field being retrieved
+ * @param classes Environment of all classes in the program
+ * @returns index of the field
+ * @throws if `t` is not an object
+ */
+export function getFieldIndex(
+  t: Type,
+  fieldName: string,
+  classes: ClassEnv
+): number {
+  if (!isObject(t))
+    throw new Error(
+      `This should be impossible - at compiler, getting field of nonobject ${t}`
+    );
+  const classdata = classes.get(t.class);
+  const fieldIndex = classdata.fields.findIndex(
+    (f) => f.typedVar.name === fieldName
+  );
+
+  return fieldIndex;
+}

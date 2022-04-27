@@ -8,7 +8,7 @@ import {
   VarDef,
   ClassDef,
 } from "./ast";
-import { binOpToInstr, uniOpToInstr } from "./compilerUtils";
+import { binOpToInstr, getFieldIndex, uniOpToInstr } from "./compilerUtils";
 import { isObject } from "./tcUtils";
 
 type LocalEnv = Map<string, boolean>;
@@ -390,14 +390,7 @@ function codeGenExpr(
     }
     case "getfield":
       const objStmts = codeGenExpr(expr.obj, locals, classes);
-      if (!isObject(expr.obj.a))
-        throw new Error(
-          `This should be impossible - at compiler, getting field of nonobject ${expr.obj}`
-        );
-      const classdata = classes.get(expr.obj.a.class);
-      const fieldIndex = classdata.fields.findIndex(
-        (f) => f.typedVar.name === expr.field
-      );
+      const fieldIndex = getFieldIndex(expr.obj.a, expr.field, classes);
 
       return [
         ...objStmts,

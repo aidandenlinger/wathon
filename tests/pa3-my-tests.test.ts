@@ -362,6 +362,19 @@ x.d = None
 x.d`,
     { tag: "object", class: "D" }
   );
+
+  assertPrint(
+    "Successfully reassign field",
+    `
+class C(object):
+  num : int = 123
+  
+x : C = None
+x = C()
+x.num = 456
+print(x.num)`,
+    ["456"]
+  );
 });
 
 // Questions: print_none?
