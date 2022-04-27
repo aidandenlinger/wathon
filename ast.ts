@@ -48,7 +48,8 @@ export type Expr<A> =
   | { a?: A; tag: "uniop"; op: UniOp; arg: Expr<A> }
   | { a?: A; tag: "binop"; op: BinOp; left: Expr<A>; right: Expr<A> }
   | { a?: A; tag: "parenthesis"; expr: Expr<A> }
-  | { a?: A; tag: "call"; name: string; args: Expr<A>[] };
+  | { a?: A; tag: "call"; name: string; args: Expr<A>[] }
+  | { a?: A; tag: "getfield"; obj: Expr<A>; name: string };
 
 export enum UniOp {
   NOT = "not",

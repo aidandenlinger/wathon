@@ -28,7 +28,7 @@ let blankPrgm: Program<null> = {
   body: [],
 };
 
-describe("basic class lookup", () => {
+describe("basic class", () => {
   assertParse(
     "Parses a class with integers",
     `
@@ -174,10 +174,36 @@ x : C = None
 x = C()`,
     [""]
   );
-
-  // Questions: print_none?
-  // TODO: method that returns None in place of an object
-  // TODO: class with no fields, but has methods!
-  // TODO: calls like r1.mul(None), None is an acceptable parameter for a class
-  // but should cause a runtime error!
 });
+
+describe("getfield", () => {
+  assertParse("Parses basic getfield", "c.x", {
+    ...blankPrgm,
+    body: [
+      {
+        tag: "expr",
+        expr: { tag: "getfield", obj: { tag: "id", name: "c" }, name: "x" },
+      },
+    ],
+  });
+
+  assertParse("Parses nested getfield", "a.b.c", {
+    ...blankPrgm,
+    body: [
+      {
+        tag: "expr",
+        expr: {
+          tag: "getfield",
+          obj: { tag: "getfield", obj: { tag: "id", name: "a" }, name: "b" },
+          name: "c",
+        },
+      },
+    ],
+  });
+});
+
+// Questions: print_none?
+// TODO: method that returns None in place of an object
+// TODO: class with no fields, but has methods!
+// TODO: calls like r1.mul(None), None is an acceptable parameter for a class
+// but should cause a runtime error!

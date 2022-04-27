@@ -484,6 +484,16 @@ export function traverseExpr(c: TreeCursor, s: string): Expr<null> {
 
       return { tag: "call", name, args };
     }
+    case "MemberExpression": {
+      c.firstChild(); // at first expression
+      const obj = traverseExpr(c, s);
+      c.nextSibling(); // at .
+      c.nextSibling(); // at PropertyName for field
+      const name = s.substring(c.from, c.to);
+      c.parent(); // restore c!
+
+      return { tag: "getfield", obj, name };
+    }
 
     default:
       throwParseError(c, s);
