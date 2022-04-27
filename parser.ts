@@ -306,7 +306,14 @@ export function traverseStmt(c: TreeCursor, s: string): Stmt<null> {
             return s.substring(c.from, c.to);
           // @ts-ignore
           case "MemberExpression":
-            throw new Error("Implement field assignment!");
+            c.firstChild(); // at first expression
+            const obj = traverseExpr(c, s);
+            c.nextSibling(); // at .
+            c.nextSibling(); // at PropertyName for field
+            const field = s.substring(c.from, c.to);
+            c.parent(); // restore c!
+
+            return { tag: "field", obj, field };
           default:
             throwParseError(c, s);
         }
