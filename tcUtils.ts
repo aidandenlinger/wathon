@@ -128,7 +128,7 @@ function typeStr(t: Type): string {
  *
  * @param s Name of type
  */
-export function throwInvalidType(s: string) {
+export function throwInvalidType(s: string): never {
   throw new Error(
     `TYPE ERROR: Invalid type annotation; there is no class named: ${s}`
   );
@@ -140,7 +140,7 @@ export function throwInvalidType(s: string) {
  * @param s the name of the variable
  * @throws yes ;)
  */
-export function throwDupDecl(s: string) {
+export function throwDupDecl(s: string): never {
   throw new Error(
     `TYPE ERROR: Duplicate declaration of identifier in same scope: ${s}`
   );
@@ -154,7 +154,7 @@ export function throwDupDecl(s: string) {
  * @param got The type that was actually received
  * @throws yes ;)
  */
-export function throwNotExpectedType(expected: Type, got: Type) {
+export function throwNotExpectedType(expected: Type, got: Type): never {
   throw new Error(
     `TYPE ERROR: Expected type \`${typeStr(expected)}\`; got type \`${typeStr(
       got
@@ -175,7 +175,7 @@ export function throwNotExpectedTypeParam(
   expected: Type,
   got: Type,
   pos: number
-) {
+): never {
   throw new Error(
     `TYPE ERROR: Expected type \`${typeStr(expected)}\`; got type \`${typeStr(
       got
@@ -189,7 +189,7 @@ export function throwNotExpectedTypeParam(
  * @param funcName name of the function where the error occured
  * @throws yes ;)
  */
-export function throwMustReturn(funcName: string) {
+export function throwMustReturn(funcName: string): never {
   throw new Error(
     `TYPE ERROR: All paths in this function/method must have a return statement: ${funcName}`
   );
@@ -202,7 +202,7 @@ export function throwMustReturn(funcName: string) {
  * @param name name of nonexistant var
  * @throws yes ;)
  */
-export function throwNotAVar(name: string) {
+export function throwNotAVar(name: string): never {
   throw new Error(`TYPE ERROR: Not a variable: ${name}`);
 }
 
@@ -212,7 +212,7 @@ export function throwNotAVar(name: string) {
  * @param name name of nonexistant function
  * @throws yes ;)
  */
-export function throwNotAFunc(name: string) {
+export function throwNotAFunc(name: string): never {
   throw new Error(`TYPE ERROR: Not a function or class: ${name}`);
 }
 
@@ -222,7 +222,7 @@ export function throwNotAFunc(name: string) {
  * @param actualType Type that was there instead of bool
  * @throws yes ;)
  */
-export function throwCondNotBool(actualType: Type) {
+export function throwCondNotBool(actualType: Type): never {
   throw new Error(
     `TYPE ERROR: Condition expression cannot be of type \`${typeStr(
       actualType
@@ -236,11 +236,11 @@ export function throwCondNotBool(actualType: Type) {
  * @param expected expected num of args
  * @param got number of args received
  */
-export function throwWrongNumArgs(expected: number, got: number) {
+export function throwWrongNumArgs(expected: number, got: number): never {
   throw new Error(`TYPE ERROR: Expected ${expected} arguments; got ${got}`);
 }
 
-export function throwWrongUniopArg(op: UniOp, arg: Type) {
+export function throwWrongUniopArg(op: UniOp, arg: Type): never {
   throw new Error(
     `TYPE ERROR: Cannot apply operator \`${op}\` on type \`${typeStr(arg)}\``
   );
@@ -252,7 +252,7 @@ export function throwWrongUniopArg(op: UniOp, arg: Type) {
  * @param left type on left
  * @param right type on right
  */
-export function throwWrongBinopArgs(op: BinOp, left: Type, right: Type) {
+export function throwWrongBinopArgs(op: BinOp, left: Type, right: Type): never {
   throw new Error(
     `TYPE ERROR: Cannot apply operator \`${op}\` on types \`${typeStr(
       left
@@ -266,7 +266,7 @@ export function throwWrongBinopArgs(op: BinOp, left: Type, right: Type) {
  * @param typ Type being accessed
  * @param attr The attribute that doesn't exist for that type
  */
-export function throwNoAttr(typ: Type, attr: string) {
+export function throwNoAttr(typ: Type, attr: string): never {
   throw new Error(
     `TYPE ERROR: There is no attribute named \`${attr}\` in class \`${typeStr(
       typ

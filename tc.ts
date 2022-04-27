@@ -403,17 +403,35 @@ export function tcExpr(
     }
     case "getfield": {
       const obj = tcExpr(e.obj, env, funcs, classes);
-      if (!isObject(obj.a)) {
-        throwNoAttr(obj.a, e.field);
-        throw new Error("should never be thrown"); // convince typescript obj.a is an obj
-      }
-      const classInfo = classes.get(obj.a.class);
-      const field = classInfo.fields.find((f) => f.typedVar.name === e.field);
-      if (field === undefined) throwNoAttr(obj.a, e.field);
+      const fieldType = tcField(obj, e.field, classes);
 
-      return { ...e, obj, a: field.typedVar.type };
+      return { ...e, obj, a: fieldType };
     }
   }
+}
+
+/**
+ * Typecheck a field access by ensuring the class has the field.
+ *
+ * @param obj
+ * @param fieldName
+ * @param classes
+ * @returns
+ * @throws if trying to access a field on a non-object
+ * @throws if object does not have fieldname
+ */
+export function tcField(
+  obj: Expr<Type>,
+  fieldName: string,
+  classes: ClassEnv
+): Type {
+  if (!isObject(obj.a)) {
+    throwNoAttr(obj.a, fieldName);
+  }
+  const classInfo = classes.get(obj.a.class);
+  const field = classInfo.fields.find((f) => f.typedVar.name === fieldName);
+  if (field === undefined) throwNoAttr(obj.a, fieldName);
+  return field.typedVar.type;
 }
 
 /**
