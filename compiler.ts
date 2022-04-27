@@ -317,7 +317,7 @@ function codeGenStmts(
   locals: LocalEnv,
   classes: ClassEnv
 ): string[] {
-  return stmts.map((s) => codeGenStmt(s, locals, classes)).flat();
+  return stmts.map((s) => codeGenStmt(s, locals, classes).concat([""])).flat();
 }
 
 /**
