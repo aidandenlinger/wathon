@@ -302,22 +302,21 @@ x = C()
 x.y = 5`,
     NUM
   );
-});
 
-assertTCFail(
-  "Can't set field with wrong type",
-  `
+  assertTCFail(
+    "Can't set field with wrong type",
+    `
 class C(object):
   y : int = 123
   
 x : C = None
 x = C()
 x.y = False`
-);
+  );
 
-assertTC(
-  "Can typecheck setting field to another class",
-  `
+  assertTC(
+    "Can typecheck setting field to another class",
+    `
 class C(object):
   d : D = None
   
@@ -328,12 +327,12 @@ x : C = None
 x = C()
 x.d = D()
 x.d`,
-  { tag: "object", class: "D" }
-);
+    { tag: "object", class: "D" }
+  );
 
-assertTC(
-  "Can typecheck nested assigns",
-  `
+  assertTC(
+    "Can typecheck nested assigns",
+    `
 class C(object):
   d : D = None
   
@@ -345,12 +344,12 @@ x = C()
 x.d = D()
 x.d.y = 5
 x.d.y`,
-  NUM
-);
+    NUM
+  );
 
-assertTC(
-  "Can assign None to object types",
-  `
+  assertTC(
+    "Can assign None to object types",
+    `
 class C(object):
   d : D = None
   
@@ -361,8 +360,9 @@ x : C = None
 x = C()
 x.d = None
 x.d`,
-  { tag: "object", class: "D" }
-);
+    { tag: "object", class: "D" }
+  );
+});
 
 // Questions: print_none?
 // TODO: method that returns None in place of an object
