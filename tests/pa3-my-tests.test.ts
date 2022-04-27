@@ -272,7 +272,97 @@ print(x)`,
       },
     ],
   });
+
+  assertTCFail(
+    "Can't set fields on an int",
+    `
+x : int = 3
+x.a = 3`
+  );
+
+  assertTCFail(
+    "Can't acess invalid fields on an obj",
+    `
+class C(object):
+  x : int = 123
+  
+x : C = None
+x = C()
+x.y = 5`
+  );
+
+  assertTC(
+    "Typecheck allows setting valid fields with valid type",
+    `
+class C(object):
+  y : int = 123
+  
+x : C = None
+x = C()
+x.y = 5`,
+    NUM
+  );
 });
+
+assertTCFail(
+  "Can't set field with wrong type",
+  `
+class C(object):
+  y : int = 123
+  
+x : C = None
+x = C()
+x.y = False`
+);
+
+assertTC(
+  "Can typecheck setting field to another class",
+  `
+class C(object):
+  d : D = None
+  
+class D(object):
+  x : int = 123
+  
+x : C = None
+x = C()
+x.d = D()
+x.d`,
+  { tag: "object", class: "D" }
+);
+
+assertTC(
+  "Can typecheck nested assigns",
+  `
+class C(object):
+  d : D = None
+  
+class D(object):
+  y : int = 123
+  
+x : C = None
+x = C()
+x.d = D()
+x.d.y = 5
+x.d.y`,
+  NUM
+);
+
+assertTC(
+  "Can assign None to object types",
+  `
+class C(object):
+  d : D = None
+  
+class D(object):
+  y : int = 123
+  
+x : C = None
+x = C()
+x.d = None
+x.d`,
+  { tag: "object", class: "D" }
+);
 
 // Questions: print_none?
 // TODO: method that returns None in place of an object

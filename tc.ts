@@ -236,9 +236,15 @@ export function tcStmt(
         if (!assignableTo(value.a, env.get(s.lhs)))
           throwNotExpectedType(env.get(s.lhs), value.a);
         return { ...s, value, a: value.a };
-      } else {
-        throw new Error("Implement assign on objects!");
       }
+      // s.lhs is a lookup
+      const obj = tcExpr(s.lhs.obj, env, funcs, classes);
+      const fieldType = tcField(obj, s.lhs.field, classes);
+      const value = tcExpr(s.value, env, funcs, classes);
+      if (!assignableTo(value.a, fieldType))
+        throwNotExpectedType(fieldType, value.a);
+
+      return { ...s, value, lhs: { ...s.lhs, obj, a: obj.a }, a: fieldType };
     }
     case "expr": {
       const expr = tcExpr(s.expr, env, funcs, classes);
