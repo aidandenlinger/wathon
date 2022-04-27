@@ -62,14 +62,13 @@ export const builtinTypes: Map<string, [Type[], Type]> = new Map([
 ]);
 
 /**
- * Check if t is an object, by ensuring it isn't anything else. This is bad,
- * there's probably a better way to do this.
+ * Check if t is an object.
  *
  * @param t Type
  * @returns if it is an object
  */
 export function isObject(t: Type): t is { tag: "object"; class: string } {
-  return t !== "int" && t !== "bool" && t !== "none";
+  return typeof t !== "string" && t.tag === "object";
 }
 
 /**
