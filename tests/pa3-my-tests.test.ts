@@ -190,7 +190,7 @@ describe("getfield", () => {
     body: [
       {
         tag: "expr",
-        expr: { tag: "getfield", obj: { tag: "id", name: "c" }, name: "x" },
+        expr: { tag: "getfield", obj: { tag: "id", name: "c" }, field: "x" },
       },
     ],
   });
@@ -202,8 +202,8 @@ describe("getfield", () => {
         tag: "expr",
         expr: {
           tag: "getfield",
-          obj: { tag: "getfield", obj: { tag: "id", name: "a" }, name: "b" },
-          name: "c",
+          obj: { tag: "getfield", obj: { tag: "id", name: "a" }, field: "b" },
+          field: "c",
         },
       },
     ],

@@ -306,14 +306,7 @@ export function traverseStmt(c: TreeCursor, s: string): Stmt<null> {
             return s.substring(c.from, c.to);
           // @ts-ignore
           case "MemberExpression":
-            c.firstChild(); // at first expression
-            const obj = traverseExpr(c, s);
-            c.nextSibling(); // at .
-            c.nextSibling(); // at PropertyName for field
-            const field = s.substring(c.from, c.to);
-            c.parent(); // restore c!
-
-            return { tag: "field", obj, field };
+            return { tag: "field", ...traverseMemberExpr(c, s) };
           default:
             throwParseError(c, s);
         }
@@ -417,6 +410,27 @@ export function traverseStmt(c: TreeCursor, s: string): Stmt<null> {
 }
 
 /**
+ * Given a member expression, traverse and return its parsed fields.
+ *
+ * @param c TreeCursor at MemberExpression
+ * @param s source program
+ * @returns parsed MemberExpression
+ */
+function traverseMemberExpr(
+  c: TreeCursor,
+  s: string
+): { obj: Expr<null>; field: string } {
+  c.firstChild(); // at first expression
+  const obj = traverseExpr(c, s);
+  c.nextSibling(); // at .
+  c.nextSibling(); // at PropertyName for field
+  const field = s.substring(c.from, c.to);
+  c.parent(); // restore c!
+
+  return { obj, field };
+}
+
+/**
  * Given a TreeCursor at an Expr, return the parsed Expr with no annotations.
  * Guarantees `c` will point at the same element it started at at function
  * return.
@@ -500,14 +514,7 @@ export function traverseExpr(c: TreeCursor, s: string): Expr<null> {
       return { tag: "call", name, args };
     }
     case "MemberExpression": {
-      c.firstChild(); // at first expression
-      const obj = traverseExpr(c, s);
-      c.nextSibling(); // at .
-      c.nextSibling(); // at PropertyName for field
-      const name = s.substring(c.from, c.to);
-      c.parent(); // restore c!
-
-      return { tag: "getfield", obj, name };
+      return { tag: "getfield", ...traverseMemberExpr(c, s) };
     }
 
     default:

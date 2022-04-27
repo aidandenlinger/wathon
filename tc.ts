@@ -404,12 +404,12 @@ export function tcExpr(
     case "getfield": {
       const obj = tcExpr(e.obj, env, funcs, classes);
       if (!isObject(obj.a)) {
-        throwNoAttr(obj.a, e.name);
+        throwNoAttr(obj.a, e.field);
         throw new Error("should never be thrown"); // convince typescript obj.a is an obj
       }
       const classInfo = classes.get(obj.a.class);
-      const field = classInfo.fields.find((f) => f.typedVar.name === e.name);
-      if (field === undefined) throwNoAttr(obj.a, e.name);
+      const field = classInfo.fields.find((f) => f.typedVar.name === e.field);
+      if (field === undefined) throwNoAttr(obj.a, e.field);
 
       return { ...e, obj, a: field.typedVar.type };
     }

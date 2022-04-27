@@ -396,7 +396,7 @@ function codeGenExpr(
         );
       const classdata = classes.get(expr.obj.a.class);
       const fieldIndex = classdata.fields.findIndex(
-        (f) => f.typedVar.name === expr.name
+        (f) => f.typedVar.name === expr.field
       );
 
       return [
