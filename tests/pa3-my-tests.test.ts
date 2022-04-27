@@ -375,6 +375,41 @@ x.num = 456
 print(x.num)`,
     ["456"]
   );
+
+  assertPrint(
+    "Successfully reassign consecutive fields",
+    `
+  class C(object):
+  x : int = 123
+  y : int = 456
+
+x : C = None
+x = C()
+x.x = 7
+x.y = 8
+print(x.x)
+print(x.y)`,
+    ["7", "8"]
+  );
+
+  assertPrint(
+    "Assign fields with two separate classes",
+    `
+class A(object):
+  b : int = 123
+  
+class C(object):
+  d : int = 456
+  
+x : A = None
+y : C = None
+x = A()
+y = C()
+x.b = 1
+y.d = 2
+print(x.b + y.d)`,
+    ["3"]
+  );
 });
 
 // Questions: print_none?

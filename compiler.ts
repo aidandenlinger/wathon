@@ -177,7 +177,17 @@ function codeGenStmt(
         const valStmts = codeGenExpr(stmt.value, locals, classes);
         return valStmts.concat([`(${setInstr} $${stmt.lhs})`]);
       }
-      throw new Error("implement fields on objects!");
+      // stmt.lhs is an object
+      const getObj = codeGenExpr(stmt.lhs.obj, locals, classes);
+      const fieldIndex = getFieldIndex(stmt.lhs.obj.a, stmt.lhs.field, classes);
+      const newValue = codeGenExpr(stmt.value, locals, classes);
+
+      return [
+        `${getObj}
+        (i32.add (i32.const ${fieldIndex * 4}))
+        ${newValue}
+        (i32.store)`,
+      ];
     case "expr":
       const exprStmts = codeGenExpr(stmt.expr, locals, classes);
       if (stmt.expr.tag == "call" && stmt.expr.a == "none") {
