@@ -252,6 +252,28 @@ print(x.y)`,
   );
 });
 
+describe("field assign", () => {
+  assertPrint(
+    "Regular assigns still work",
+    `
+x : int = 0
+x = 2
+print(x)`,
+    ["2"]
+  );
+
+  assertParse("Parses basic field assign", `x.a = 3`, {
+    ...blankPrgm,
+    body: [
+      {
+        tag: "assign",
+        lhs: { tag: "field", obj: { tag: "id", name: "x" }, field: "a" },
+        value: { tag: "literal", value: { tag: "num", value: 3 } },
+      },
+    ],
+  });
+});
+
 // Questions: print_none?
 // TODO: method that returns None in place of an object
 // TODO: class with no fields, but has methods!

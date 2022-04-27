@@ -230,11 +230,15 @@ export function tcStmt(
 ): Stmt<Type> {
   switch (s.tag) {
     case "assign": {
-      if (!env.has(s.name)) throwNotAVar(s.name);
-      const value = tcExpr(s.value, env, funcs, classes);
-      if (!assignableTo(value.a, env.get(s.name)))
-        throwNotExpectedType(env.get(s.name), value.a);
-      return { ...s, value, a: value.a };
+      if (typeof s.lhs === "string") {
+        if (!env.has(s.lhs)) throwNotAVar(s.lhs);
+        const value = tcExpr(s.value, env, funcs, classes);
+        if (!assignableTo(value.a, env.get(s.lhs)))
+          throwNotExpectedType(env.get(s.lhs), value.a);
+        return { ...s, value, a: value.a };
+      } else {
+        throw new Error("Implement assign on objects!");
+      }
     }
     case "expr": {
       const expr = tcExpr(s.expr, env, funcs, classes);

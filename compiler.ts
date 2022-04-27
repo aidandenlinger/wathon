@@ -172,9 +172,12 @@ function codeGenStmt(
 ): string[] {
   switch (stmt.tag) {
     case "assign":
-      const setInstr = locals.has(stmt.name) ? "local.set" : "global.set";
-      const valStmts = codeGenExpr(stmt.value, locals, classes);
-      return valStmts.concat([`(${setInstr} $${stmt.name})`]);
+      if (typeof stmt.lhs === "string") {
+        const setInstr = locals.has(stmt.lhs) ? "local.set" : "global.set";
+        const valStmts = codeGenExpr(stmt.value, locals, classes);
+        return valStmts.concat([`(${setInstr} $${stmt.lhs})`]);
+      }
+      throw new Error("implement fields on objects!");
     case "expr":
       const exprStmts = codeGenExpr(stmt.expr, locals, classes);
       if (stmt.expr.tag == "call" && stmt.expr.a == "none") {

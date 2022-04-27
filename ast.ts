@@ -28,7 +28,7 @@ export type FunDef<A> = {
 };
 
 export type Stmt<A> =
-  | { a?: A; tag: "assign"; name: string; value: Expr<A> }
+  | { a?: A; tag: "assign"; lhs: LValue<A>; value: Expr<A> }
   | {
       a?: A;
       tag: "if";
@@ -41,6 +41,10 @@ export type Stmt<A> =
   | { a?: A; tag: "pass" }
   | { a?: A; tag: "return"; expr?: Expr<A> }
   | { a?: A; tag: "expr"; expr: Expr<A> };
+
+export type LValue<A> =
+  | string
+  | { a?: A; tag: "field"; obj: Expr<A>; field: string };
 
 export type Expr<A> =
   | { a?: A; tag: "literal"; value: Literal<A> }

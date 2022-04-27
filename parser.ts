@@ -10,6 +10,7 @@ import {
   VarDef,
   Literal,
   ClassDef,
+  LValue,
 } from "./ast";
 import {
   isVarDef,
@@ -298,16 +299,23 @@ export function traverseStmt(c: TreeCursor, s: string): Stmt<null> {
   switch (c.node.type.name) {
     case "AssignStatement":
       c.firstChild(); // go to name
-      const name = s.substring(c.from, c.to);
+      let lhs: LValue<null> = (() => {
+        switch (c.node.type.name) {
+          // @ts-ignore
+          case "VariableName":
+            return s.substring(c.from, c.to);
+          // @ts-ignore
+          case "MemberExpression":
+            throw new Error("Implement field assignment!");
+          default:
+            throwParseError(c, s);
+        }
+      })();
       c.nextSibling(); // go to equals
       c.nextSibling(); // go to value
       const value = traverseExpr(c, s);
       c.parent();
-      return {
-        tag: "assign",
-        name: name,
-        value: value,
-      };
+      return { tag: "assign", lhs, value };
     case "ExpressionStatement": {
       c.firstChild();
       const expr = traverseExpr(c, s);
