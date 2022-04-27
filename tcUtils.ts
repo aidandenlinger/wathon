@@ -260,3 +260,17 @@ export function throwWrongBinopArgs(op: BinOp, left: Type, right: Type) {
     )}\` and \`${typeStr(right)}\``
   );
 }
+
+/**
+ * Throw an error when a field that doesn't exist on this class is searched for.
+ *
+ * @param typ Type being accessed
+ * @param attr The attribute that doesn't exist for that type
+ */
+export function throwNoAttr(typ: Type, attr: string) {
+  throw new Error(
+    `TYPE ERROR: There is no attribute named \`${attr}\` in class \`${typeStr(
+      typ
+    )}\``
+  );
+}

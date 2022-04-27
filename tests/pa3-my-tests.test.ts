@@ -200,6 +200,36 @@ describe("getfield", () => {
       },
     ],
   });
+
+  assertTCFail(
+    "Can't access fields on an int",
+    `
+x : int = 3
+x.a`
+  );
+
+  assertTCFail(
+    "Can't acess invalid fields on an obj",
+    `
+class C(object):
+  x : int = 123
+  
+x : C = None
+x = C()
+x.y`
+  );
+
+  assertTC(
+    "Typecheck allows accessing valid fields",
+    `
+class C(object):
+  y : int = 123
+  
+x : C = None
+x = C()
+x.y`,
+    NUM
+  );
 });
 
 // Questions: print_none?

@@ -27,11 +27,12 @@ import {
   assignableTo,
   throwInvalidType,
   isObject,
+  throwNoAttr,
 } from "./tcUtils";
 
 type BodyEnv = Map<string, Type>;
 type FuncEnv = Map<string, [Type[], Type]>;
-type ClassEnv = Set<string>;
+type ClassEnv = Map<string, ClassDef<null>>;
 
 /**
  * Given a Program AST, annotates it with proper types, throws if not typesafe.
@@ -41,13 +42,17 @@ type ClassEnv = Set<string>;
  * @throws if variable names are redeclared in global scope
  */
 export function tcProgram(p: Program<null>): Program<Type> {
-  // Typecheck all globals
-  const classNames = new Set(p.classes.map((c) => c.name));
-  const vars = p.vars.map((v) => tcVarDef(v, classNames));
+  const classes = new Map();
+  p.classes.forEach((c) => {
+    if (classes.has(c.name)) throwDupDecl(c.name);
+    classes.set(c.name, c);
+  });
+
+  const vars = p.vars.map((v) => tcVarDef(v, classes));
   const globals = new Map<string, Type>();
   vars.forEach((v) => {
-    if (globals.has(v.typedVar.name)) throwDupDecl(v.typedVar.name);
-    if (classNames.has(v.typedVar.name)) throwDupDecl(v.typedVar.name);
+    if (globals.has(v.typedVar.name) || classes.has(v.typedVar.name))
+      throwDupDecl(v.typedVar.name);
     globals.set(v.typedVar.name, v.a);
   });
 
@@ -55,16 +60,18 @@ export function tcProgram(p: Program<null>): Program<Type> {
   const funcEnv = new Map(builtinTypes);
   // Now typecheck funcs
   p.funcs.forEach((func) => {
-    if (funcEnv.has(func.name)) throwDupDecl(func.name);
-    if (classNames.has(func.name)) throwDupDecl(func.name);
+    if (
+      funcEnv.has(func.name) ||
+      globals.has(func.name) ||
+      classes.has(func.name)
+    )
+      throwDupDecl(func.name);
     funcEnv.set(func.name, [func.params.map((p) => p.type), func.ret]);
   });
-  const funcs = p.funcs.map((f) => tcFunDef(f, globals, funcEnv, classNames));
+  const funcs = p.funcs.map((f) => tcFunDef(f, globals, funcEnv, classes));
 
   // Typecheck body, which returns "none"
-  const body = p.body.map((s) =>
-    tcStmt(s, globals, funcEnv, "none", classNames)
-  );
+  const body = p.body.map((s) => tcStmt(s, globals, funcEnv, "none", classes));
 
   const finalStmtType = (() => {
     if (body.length === 0) {
@@ -386,6 +393,18 @@ export function tcExpr(
     case "parenthesis": {
       const expr = tcExpr(e.expr, env, funcs, classes);
       return { ...e, expr, a: expr.a };
+    }
+    case "getfield": {
+      const obj = tcExpr(e.obj, env, funcs, classes);
+      if (!isObject(obj.a)) {
+        throwNoAttr(obj.a, e.name);
+        throw new Error("should never be thrown"); // convince typescript obj.a is an obj
+      }
+      const classInfo = classes.get(obj.a.class);
+      const field = classInfo.fields.find((f) => f.typedVar.name === e.name);
+      if (field === undefined) throwNoAttr(obj.a, e.name);
+
+      return { ...e, obj, a: field.typedVar.type };
     }
   }
 }
