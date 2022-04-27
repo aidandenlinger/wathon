@@ -119,6 +119,14 @@ x`,
 x : C = None`
   );
 
+  assertTCFail(
+    "Doesn't typecheck a class with an invalid typedVar",
+    `
+class C(object):
+  x : bool = 123
+  y : int = True`
+  );
+
   assertTC(
     "allows for classes to be used out of order in var definitions",
     `
@@ -229,6 +237,18 @@ x : C = None
 x = C()
 x.y`,
     NUM
+  );
+
+  assertPrint(
+    "Successful field access",
+    `
+class C(object):
+  y : int = 123
+
+x : C = None
+x = C()
+print(x.y)`,
+    ["123"]
   );
 });
 
