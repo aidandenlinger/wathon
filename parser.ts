@@ -517,12 +517,17 @@ export function traverseExpr(c: TreeCursor, s: string): Expr<null> {
           return { tag: "call", name, args };
         }
         case "MemberExpression": {
-          const obj = traverseMemberExpr(c, s);
+          const memberInfo = traverseMemberExpr(c, s);
           c.nextSibling();
           const args = traverseArgs(c, s);
           c.parent();
 
-          return { tag: "method", ...obj, args };
+          return {
+            tag: "method",
+            obj: memberInfo.obj,
+            method: memberInfo.field,
+            args,
+          };
         }
       }
     }

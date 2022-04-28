@@ -526,7 +526,7 @@ describe("Method calls", () => {
         expr: {
           tag: "method",
           obj: { tag: "id", name: "x" },
-          field: "test",
+          method: "test",
           args: [],
         },
       },
@@ -541,7 +541,7 @@ describe("Method calls", () => {
         expr: {
           tag: "method",
           obj: { tag: "getfield", obj: { tag: "id", name: "x" }, field: "y" },
-          field: "test",
+          method: "test",
           args: [],
         },
       },
@@ -558,15 +558,85 @@ describe("Method calls", () => {
           obj: {
             tag: "method",
             obj: { tag: "id", name: "x" },
-            field: "y",
+            method: "y",
             args: [],
           },
-          field: "test",
+          method: "test",
           args: [],
         },
       },
     ],
   });
+
+  assertTCFail(
+    "Ensure we can't call nonexistant methods",
+    `
+class C(object):
+  def test(self : C) -> int:
+    return 3
+    
+x : C = None
+x = C()
+x.funcThatDoesntExist()`
+  );
+
+  assertTCFail(
+    "Ensure we can't call on nonclasses",
+    `
+x : int = 3
+x.asString()`
+  );
+
+  assertTCFail(
+    "Ensure method calls are checked like functions",
+    `
+class C(object):
+  def test(self : C, x : int) -> int:
+    return x
+    
+x : C = None
+x = C()
+x.test()`
+  );
+
+  assertTC(
+    "Ensure we can call a method",
+    `
+class C(object):
+  def test(self : C, x : int) -> int:
+    return x
+    
+x : C = None
+x = C()
+x.test(3)`,
+    NUM
+  );
+
+  assertTC(
+    "Ensure we can call a method with no args",
+    `
+class C(object):
+  def id(self : C) -> C:
+    return self
+    
+x : C = None
+x = C()
+x.id()`,
+    { tag: "object", class: "C" }
+  );
+
+  assertTC(
+    "Ensure we can call a function with None",
+    `
+class C(object):
+  def otherId(self : C, other : C) -> C:
+    return other
+    
+x : C = None
+x = C()
+x.otherId(None)`,
+    { tag: "object", class: "C" }
+  );
 });
 
 // Questions: print_none?
@@ -575,5 +645,4 @@ describe("Method calls", () => {
 // TOOD: method calls on None, runtime error
 // TODO: calls like r1.mul(None), None is an acceptable parameter for a class but should cause a runtime error!
 
-// TODO: class with no fields, but has methods! Can be called and stuff!
-// TODO: method that returns None in place of an object (typechecked)
+// TODO: class with no fields, but has methods! Can be called and stuff with other classes existing!
