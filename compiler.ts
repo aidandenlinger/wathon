@@ -432,12 +432,18 @@ function codeGenExpr(
       ];
     }
     case "method": {
-      const argInstrs = [expr.obj, ...expr.args]
+      if (!isObject(expr.obj.a)) throw new Error("Should not happen");
+      const objInstrs = codeGenExpr(expr.obj, locals, classes).flat();
+      const argInstrs = expr.args
         .map((a) => codeGenExpr(a, locals, classes))
         .flat();
-      if (!isObject(expr.obj.a)) throw new Error("Should not happen");
 
-      return [...argInstrs, `(call $$${expr.obj.a.class}$${expr.method})`];
+      return [
+        ...objInstrs,
+        checkNone,
+        ...argInstrs,
+        `(call $$${expr.obj.a.class}$${expr.method})`,
+      ];
     }
   }
 }
