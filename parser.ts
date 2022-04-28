@@ -506,12 +506,20 @@ export function traverseExpr(c: TreeCursor, s: string): Expr<null> {
     }
     case "CallExpression": {
       c.firstChild(); // to name
-      const name = s.substring(c.from, c.to);
-      c.nextSibling(); // go to arglist
-      const args = traverseArgs(c, s);
-      c.parent(); // we've parsed everything, move back to start node
+      switch (c.node.type.name) {
+        case "VariableName": {
+          // this is a regular call
+          const name = s.substring(c.from, c.to);
+          c.nextSibling(); // go to arglist
+          const args = traverseArgs(c, s);
+          c.parent(); // we've parsed everything, move back to start node
 
-      return { tag: "call", name, args };
+          return { tag: "call", name, args };
+        }
+        case "MemberExpression": {
+          throw new Error("Implement methods!");
+        }
+      }
     }
     case "MemberExpression": {
       return { tag: "getfield", ...traverseMemberExpr(c, s) };
