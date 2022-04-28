@@ -28,6 +28,8 @@ import {
   throwInvalidType,
   isObject,
   throwNoAttr,
+  throwShadowClass,
+  throwMethodNeedsSelf,
 } from "./tcUtils";
 
 type BodyEnv = Map<string, Type>;
@@ -106,6 +108,14 @@ export function tcClass(
   // TODO: ensure first parameter is self with correct type, then only consider
   // the rest of the params
   const methods = c.methods.map((m) => tcFunDef(m, globals, funcs, classes));
+  methods.forEach((m) => {
+    if (
+      m.params.length === 0 ||
+      !isObject(m.params[0].a) ||
+      m.params[0].a.class !== c.name
+    )
+      throwMethodNeedsSelf(m.name);
+  });
 
   return { ...c, fields, methods };
 }
@@ -161,10 +171,15 @@ export function tcFunDef(
 ): FunDef<Type> {
   const locals: BodyEnv = new Map();
 
+  // Ensure it's returning a valid Type
+  if (isObject(f.ret) && !classes.has(f.ret.class))
+    throwInvalidType(f.ret.class);
+
   // add params to locals and check for duplicates
   const params = f.params.map((p) => tcTypedVar(p, classes));
   params.forEach((p) => {
     if (locals.has(p.name)) throwDupDecl(p.name);
+    if (classes.has(p.name)) throwShadowClass(p.name);
     locals.set(p.name, p.a);
   });
 
@@ -172,10 +187,13 @@ export function tcFunDef(
   const inits = f.inits.map((i) => tcVarDef(i, classes));
   inits.forEach((i) => {
     if (locals.has(i.typedVar.name)) throwDupDecl(i.typedVar.name);
+    if (classes.has(i.typedVar.name)) throwShadowClass(i.typedVar.name);
     locals.set(i.typedVar.name, i.typedVar.type);
   });
 
   // local env, where local variable names overwrite global variable names!
+  // Don't need to worry about class vars - they need to be accessed through
+  // the "self" parameter
   const env = new Map([
     ...Array.from(globals.entries()),
     ...Array.from(locals.entries()),

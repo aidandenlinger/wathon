@@ -147,6 +147,26 @@ export function throwDupDecl(s: string): never {
 }
 
 /**
+ * Throws an error when something attempts to use an existing class name.
+ *
+ * @param className class name being reused
+ */
+export function throwShadowClass(className: string): never {
+  throw new Error(`TYPE ERROR: Cannot shadow class name: ${className}`);
+}
+
+/**
+ * Throw an error when the first parameter of a method is not `self`.
+ *
+ * @param method method that doesn't have correct first parameter
+ */
+export function throwMethodNeedsSelf(method: string): never {
+  throw new Error(
+    `TYPE ERROR: First parameter of the following method must be of the enclosing class: ${method}`
+  );
+}
+
+/**
  * Throw an error for when an expression's type is not the expected type (ex,
  * assigning a bool to a variable that was declared to be an int)
  *

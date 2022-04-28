@@ -455,7 +455,50 @@ class C(object):
     }
   );
 
-  // a typechecking fail because method doesn't have self argument as first arg
+  assertTCFail(
+    "Fail methods that don't have the first parameter of their own class",
+    `
+class C(object):
+  def funcWithoutSelf() -> int:
+    return 3`
+  );
+
+  assertTCFail(
+    "Ensure methods are typechecked by function rules",
+    `
+class C(object):
+  def test(self : C) -> int:
+    return True`
+  );
+
+  assertTC(
+    "Ensure methods can return objects",
+    `
+class C(object):
+  def test(self : C, b : D) -> D:
+    return b
+    
+class D(object):
+  y : int = 3`,
+    NONE
+  );
+
+  assertTCFail(
+    "Ensure methods cannot return invalid objects",
+    `
+class C(object):
+  def test(self : C) -> D:
+    return 1`
+  );
+
+  assertTC(
+    "Methods can return none in place of objects",
+    `
+class C(object):
+  def test(self : C) -> C:
+    return None`,
+    NONE
+  );
 });
 
 // Questions: print_none?
@@ -464,5 +507,5 @@ class C(object):
 // TOOD: method calls on None, runtime error
 // TODO: calls like r1.mul(None), None is an acceptable parameter for a class but should cause a runtime error!
 
-// TODO: class with no fields, but has methods!
-// TODO: method that returns None in place of an object
+// TODO: class with no fields, but has methods! Can be called and stuff!
+// TODO: method that returns None in place of an object (typechecked)
