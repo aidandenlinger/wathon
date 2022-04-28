@@ -9,6 +9,7 @@ import {
   ClassDef,
 } from "./ast";
 import { binOpToInstr, getFieldIndex, uniOpToInstr } from "./compilerUtils";
+import { isObject } from "./tcUtils";
 
 type LocalEnv = Map<string, boolean>;
 type ClassEnv = Map<string, ClassDef<Type>>;
@@ -200,7 +201,10 @@ function codeGenStmt(
       ];
     case "expr":
       const exprStmts = codeGenExpr(stmt.expr, locals, classes);
-      if (stmt.expr.tag == "call" && stmt.expr.a == "none") {
+      if (
+        (stmt.expr.tag == "call" || stmt.expr.tag == "method") &&
+        stmt.expr.a == "none"
+      ) {
         // if the function returns None, don't try to save its value since there is none!
         return exprStmts;
       }
@@ -408,7 +412,7 @@ function codeGenExpr(
     case "parenthesis": {
       return codeGenExpr(expr.expr, locals, classes);
     }
-    case "getfield":
+    case "getfield": {
       const objStmts = codeGenExpr(expr.obj, locals, classes);
       const fieldIndex = getFieldIndex(expr.obj.a, expr.field, classes);
 
@@ -417,6 +421,15 @@ function codeGenExpr(
         `(i32.add (i32.const ${fieldIndex * 4}))`,
         `(i32.load)`,
       ];
+    }
+    case "method": {
+      const argInstrs = [expr.obj, ...expr.args]
+        .map((a) => codeGenExpr(a, locals, classes))
+        .flat();
+      if (!isObject(expr.obj.a)) throw new Error("Should not happen");
+
+      return [...argInstrs, `(call $$${expr.obj.a.class}$${expr.method})`];
+    }
   }
 }
 

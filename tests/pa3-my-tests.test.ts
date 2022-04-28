@@ -637,6 +637,35 @@ x = C()
 x.otherId(None)`,
     { tag: "object", class: "C" }
   );
+
+  assertPrint(
+    "Successfully call a method",
+    `
+class C(object):
+  x : int = 123
+  def getX(self : C) -> int:
+    return self.x
+    
+x : C = None
+x = C()
+print(x.getX())`,
+    ["123"]
+  );
+
+  assertPrint(
+    "Successfully call a method that doesn't return anything",
+    `
+class C(object):
+  x : int = 123
+  def setX(self : C):
+    self.x = 4
+
+c : C = None
+c = C()
+c.setX()
+print(c.x)`,
+    ["4"]
+  );
 });
 
 // Questions: print_none?
