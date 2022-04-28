@@ -9,7 +9,6 @@ import {
   ClassDef,
 } from "./ast";
 import { binOpToInstr, getFieldIndex, uniOpToInstr } from "./compilerUtils";
-import { isObject } from "./tcUtils";
 
 type LocalEnv = Map<string, boolean>;
 type ClassEnv = Map<string, ClassDef<Type>>;
@@ -37,6 +36,15 @@ export function compile(p: Program<Type>): CompileResult {
 
   const classes = new Map();
   p.classes.forEach((c) => classes.set(c.name, c));
+  const classFuncs = p.classes
+    .map((c) =>
+      c.methods
+        .map((m) =>
+          codeGenFunDef({ ...m, name: `$${c.name}$${m.name}` }, classes)
+        )
+        .flat()
+    )
+    .flat();
 
   const funcs = p.funcs.map((f) => codeGenFunDef(f, classes)).flat();
 
@@ -68,6 +76,7 @@ export function compile(p: Program<Type>): CompileResult {
     (func $pow (import "imports" "pow") (param i32 i32) (result i32))
 
     ${globals.join("\n    ")}
+    ${classFuncs.join("\n\n")}
     ${funcs.join("\n\n")}
 
     (func (export "exported_func") ${returnType}
@@ -146,14 +155,15 @@ function codeGenFunDef(fun: FunDef<Type>, classes: ClassEnv): string[] {
   // our dummy value: by typechecker, your function should've returned a long
   // time ago, and this will never come into play. However, if you randomly get
   // a 9999 as a return value... this is probably the wrong solution :)
-  const dummyVal = retInstr !== "" ? `\t(i32.const 9999)` : ``;
+  const dummyVal = retInstr !== "" ? `(i32.const 9999)` : ``;
 
   return [
-    `(func $${fun.name} ${paramInstrs.join(" ")} ${retInstr} 
-        (local $$scratch i32)
-${initInstrs.join("\n")}
-${bodyInstrs.join("\n")}
-${dummyVal}
+    `
+    (func $${fun.name} ${paramInstrs.join(" ")} ${retInstr} 
+      (local $$scratch i32)
+      ${initInstrs.join("\n      ")}
+      ${bodyInstrs.join("\n      ")}
+      ${dummyVal}
     )`,
   ];
 }
