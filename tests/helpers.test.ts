@@ -2,6 +2,7 @@ import { parse } from "../parser";
 import { tcProgram } from "../tc";
 import { importObject } from "./import-object.test";
 import { run as myRun } from "../runner";
+import { panic } from "../panic";
 
 // Modify typeCheck to return a `Type` as we have specified below
 export function typeCheck(source: string): Type {
@@ -15,6 +16,9 @@ export function typeCheck(source: string): Type {
 // within another function in your compiler, for example if you need other
 // JavaScript-side helpers
 export async function run(source: string) {
+  // Add a panic handler
+  importObject.imports = Object.assign({ panic: panic }, importObject.imports);
+
   await myRun(source, { importObject });
 }
 

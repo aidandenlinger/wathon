@@ -1,3 +1,4 @@
+import { panic } from "./panic";
 import { run } from "./runner";
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -24,6 +25,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         display("None");
         return arg;
       },
+      panic: panic,
       abs: Math.abs,
       min: Math.min,
       max: Math.max,

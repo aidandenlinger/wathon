@@ -1,4 +1,5 @@
 import { BinOp, ClassDef, Type, UniOp } from "./ast";
+import { RuntimeErrors } from "./panic";
 import { isObject } from "./tcUtils";
 
 /**
@@ -25,6 +26,22 @@ export const uniOpToInstr: Map<UniOp, string> = new Map([
 ]);
 
 type ClassEnv = Map<string, ClassDef<Type>>;
+
+/**
+ * Check the given object to see if it's None, if so panic at runtime.
+ * Assumes an object address is on the stack. Will restore its argument.
+ */
+export const checkNone: string = [
+  `(local.set $$scratch)`,
+  `(local.get $$scratch)`,
+  `(i32.eq (i32.const 0))`, // 0 is the representation of none
+  `(if`,
+  `(then`,
+  `(call $panic (i32.const ${RuntimeErrors.OperationOnNone}))`,
+  `)`,
+  `)`,
+  `(local.get $$scratch)`,
+].join("\n");
 
 /**
  * Find the index for a field based off an object type, a field, and a classenv.

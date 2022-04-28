@@ -668,10 +668,41 @@ print(c.x)`,
   );
 });
 
+describe("Runtime Errors", () => {
+  assertFail(
+    "Accessing field on None fails",
+    `
+class C(object):
+  x : int = 123
+  
+x : C = None
+x.x`
+  );
+
+  assertFail(
+    "Setting field on None fails",
+    `
+class C(object):
+  x : int = 123
+  
+x : C = None
+x.x = 5`
+  );
+
+  assertFail(
+    "Calling method on None fails",
+    `
+class C(object):
+  def test(self : C) -> int:
+    return 3
+    
+x : C = None
+x.test()`
+  );
+});
+
 // Questions: print_none?
 // tldr lots of None
-// TODO: getting/setting fields on None, runtime error
-// TOOD: method calls on None, runtime error
 // TODO: calls like r1.mul(None), None is an acceptable parameter for a class but should cause a runtime error!
 
 // TODO: class with no fields, but has methods! Can be called and stuff with other classes existing!

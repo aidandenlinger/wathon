@@ -8,7 +8,13 @@ import {
   VarDef,
   ClassDef,
 } from "./ast";
-import { binOpToInstr, getFieldIndex, uniOpToInstr } from "./compilerUtils";
+import {
+  binOpToInstr,
+  checkNone,
+  getFieldIndex,
+  uniOpToInstr,
+} from "./compilerUtils";
+import { RuntimeErrors } from "./panic";
 import { isObject } from "./tcUtils";
 
 type LocalEnv = Map<string, boolean>;
@@ -75,6 +81,7 @@ export function compile(p: Program<Type>): CompileResult {
     (func $min (import "imports" "min") (param i32 i32) (result i32))
     (func $max (import "imports" "max") (param i32 i32) (result i32))
     (func $pow (import "imports" "pow") (param i32 i32) (result i32))
+    (func $panic (import "imports" "panic") (param i32))
 
     ${globals.join("\n    ")}
     ${classFuncs.join("\n\n")}
@@ -195,6 +202,7 @@ function codeGenStmt(
 
       return [
         `${getObj}
+        ${checkNone}
         (i32.add (i32.const ${fieldIndex * 4}))
         ${newValue}
         (i32.store)`,
