@@ -526,7 +526,22 @@ describe("Method calls", () => {
         expr: {
           tag: "method",
           obj: { tag: "id", name: "x" },
-          name: "test",
+          field: "test",
+          args: [],
+        },
+      },
+    ],
+  });
+
+  assertParse("Parses nested method calls", `x.y.test()`, {
+    ...blankPrgm,
+    body: [
+      {
+        tag: "expr",
+        expr: {
+          tag: "method",
+          obj: { tag: "getfield", obj: { tag: "id", name: "x" }, field: "y" },
+          field: "test",
           args: [],
         },
       },

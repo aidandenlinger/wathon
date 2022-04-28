@@ -517,7 +517,12 @@ export function traverseExpr(c: TreeCursor, s: string): Expr<null> {
           return { tag: "call", name, args };
         }
         case "MemberExpression": {
-          throw new Error("Implement methods!");
+          const obj = traverseMemberExpr(c, s);
+          c.nextSibling();
+          const args = traverseArgs(c, s);
+          c.parent();
+
+          return { tag: "method", ...obj, args };
         }
       }
     }
