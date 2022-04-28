@@ -20,7 +20,6 @@ import {
   toType,
   strToUniOp,
 } from "./parserUtils";
-import { Func } from "mocha";
 
 /**
  * Given a Python source program, return a Program AST (as defined in ast.ts)
@@ -123,7 +122,8 @@ export function traverseClassDef(c: TreeCursor, s: string): ClassDef<null> {
         break;
       }
       case "FunctionDefinition":
-        throw new Error("TODO: functions in classes in parser!");
+        methods.push(traverseFunDef(c, s));
+        break;
       default:
         throwParseError(c, s);
     }

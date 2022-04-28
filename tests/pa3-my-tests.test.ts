@@ -410,10 +410,59 @@ y.d = 2
 print(x.b + y.d)`,
     ["3"]
   );
+
+  assertParse(
+    "Parse class with methods",
+    `
+class C(object):
+  x : int = 123
+  
+  def test(self: C) -> int:
+    return 3
+  
+  y : int = 456`,
+    {
+      ...blankPrgm,
+      classes: [
+        {
+          name: "C",
+          fields: [
+            {
+              typedVar: { name: "x", type: "int" },
+              value: { tag: "num", value: 123 },
+            },
+            {
+              typedVar: { name: "y", type: "int" },
+              value: { tag: "num", value: 456 },
+            },
+          ],
+          methods: [
+            {
+              name: "test",
+              params: [{ name: "self", type: { tag: "object", class: "C" } }],
+              ret: "int",
+              inits: [],
+              body: [
+                {
+                  tag: "return",
+                  expr: { tag: "literal", value: { tag: "num", value: 3 } },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+  );
+
+  // a typechecking fail because method doesn't have self argument as first arg
 });
 
 // Questions: print_none?
-// TODO: method that returns None in place of an object
+// tldr lots of None
+// TODO: getting/setting fields on None, runtime error
+// TOOD: method calls on None, runtime error
+// TODO: calls like r1.mul(None), None is an acceptable parameter for a class but should cause a runtime error!
+
 // TODO: class with no fields, but has methods!
-// TODO: calls like r1.mul(None), None is an acceptable parameter for a class
-// but should cause a runtime error!
+// TODO: method that returns None in place of an object
