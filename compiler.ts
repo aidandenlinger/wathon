@@ -426,6 +426,7 @@ function codeGenExpr(
 
       return [
         ...objStmts,
+        checkNone,
         `(i32.add (i32.const ${fieldIndex * 4}))`,
         `(i32.load)`,
       ];
