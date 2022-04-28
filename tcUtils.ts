@@ -15,7 +15,7 @@ export const binopTypes: Map<BinOp, [Type[][], Type]> = new Map([
   [BinOp.LE, [[["int", "int"]], "bool"]],
   [BinOp.GT, [[["int", "int"]], "bool"]],
   [BinOp.GE, [[["int", "int"]], "bool"]],
-  [BinOp.IS, [[["none", "none"]], "bool"]],
+  [BinOp.IS, [[["none", "none"]], "bool"]], // This was a bad approach for IS, handled in typechecker directly
   [
     BinOp.EQ,
     [

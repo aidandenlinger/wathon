@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Program } from "../ast";
+import { BinOp, Program } from "../ast";
 import { parse } from "../parser";
 import {
   assertPrint,
@@ -698,6 +698,134 @@ class C(object):
     
 x : C = None
 x.test()`
+  );
+});
+
+describe("is", () => {
+  assertParse("Can parse is", `None is None`, {
+    ...blankPrgm,
+    body: [
+      {
+        tag: "expr",
+        expr: {
+          tag: "binop",
+          op: BinOp.IS,
+          left: { tag: "literal", value: { tag: "none" } },
+          right: { tag: "literal", value: { tag: "none" } },
+        },
+      },
+    ],
+  });
+
+  assertTCFail(
+    "Cannot be used on ints",
+    `
+class C(object):
+  x : int = 3
+
+x : C = None
+y : int = 3
+x is y`
+  );
+
+  assertTCFail(
+    "Cannot be used on bools",
+    `
+class C(object):
+  x : int = 3
+  
+x : C = None
+y : bool = True
+x is y`
+  );
+
+  assertPrint(
+    "True when both objects are same in memory",
+    `
+class C(object):
+  x : int = 123
+  
+x : C = None
+y : C = None
+x = C()
+y = x
+print(x is y)
+print(y is x)`,
+    ["True", "True"]
+  );
+
+  assertPrint(
+    "True when object is None",
+    `
+class C(object):
+  x : int = 123
+  
+x : C = None
+y : C = None
+print(x is y)
+print(y is x)`,
+    ["True", "True"]
+  );
+
+  assertPrint(
+    "True when different types are both None",
+    `
+class C(object):
+  x : int = 123
+  
+class D(object):
+  x : int = 4
+  
+x : C = None
+y : D = None
+print(x is y)
+print(y is x)`,
+    ["True", "True"]
+  );
+
+  assertPrint(
+    "False when different types",
+    `
+class C(object):
+  x : int = 123
+  
+class D(object):
+  x : int = 4
+  
+x : C = None
+y : D = None
+x = C()
+y = D()
+print(x is y)
+print(y is x)`,
+    ["False", "False"]
+  );
+
+  assertPrint(
+    "False when different objects in memory",
+    `
+class C(object):
+  x : int = 123
+  
+x : C = None
+y : C = None
+x = C()
+y = C()
+print(x is y)
+print(y is x)`,
+    ["False", "False"]
+  );
+
+  assertPrint(
+    "True when checking object directly against None",
+    `
+class C(object):
+  x : int = 123
+  
+x : C = None
+print(x is None)
+print(None is x)`,
+    ["True", "True"]
   );
 });
 

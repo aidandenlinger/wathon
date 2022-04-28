@@ -7,6 +7,7 @@ import {
   Type,
   VarDef,
   ClassDef,
+  BinOp,
 } from "./ast";
 import {
   binOpToInstr,
@@ -405,6 +406,8 @@ function codeGenExpr(
       return [...arg, uniOpToInstr.get(expr.op)];
     }
     case "binop": {
+      if (expr.op === BinOp.IS) return codeGenIs(expr, locals, classes);
+
       if (!binOpToInstr.has(expr.op)) {
         throw new Error(`TODO: ${expr.op} unimplemented in compiler`);
       }
@@ -463,4 +466,49 @@ function codeGenLiteral(l: Literal<Type>): string[] {
     case "none":
       return [`(i32.const 0)`];
   }
+}
+
+/**
+ * Generate code for the `is` operator, which checks if the objects are the same
+ * object in memory, or both objects evaluate to None.
+ *
+ * @param expr
+ * @param locals
+ * @param classes
+ * @returns
+ */
+function codeGenIs(
+  expr: Expr<Type>,
+  locals: LocalEnv,
+  classes: ClassEnv
+): string[] {
+  if (expr.tag !== "binop" || expr.op !== BinOp.IS)
+    throw new Error("Logic error in codeGenIs");
+
+  // If both are none, it's simply true
+  if (expr.left.a === "none" && expr.right.a === "none")
+    return [`(i32.const 1)`];
+
+  // If one of them is none, we just need to check if the other one is equal to
+  // 0. An object equal to 0 represents None.
+  if (expr.left.a === "none" || expr.right.a === "none") {
+    const obj = expr.left.a !== "none" ? expr.left : expr.right;
+    const objStmts = codeGenExpr(obj, locals, classes);
+
+    return [...objStmts, `(i32.eq (i32.const 0))`];
+  }
+
+  if (!isObject(expr.left.a) || !isObject(expr.right.a))
+    throw new Error(
+      "Logic error in codeGenIs, typechecker gave us ints or bools"
+    );
+
+  // They are both objects, need to see if they point to the same location
+  // in memory. We don't need to check the classes, if they're different
+  // classes they'll point to different locations in memory.
+
+  const leftStmts = codeGenExpr(expr.left, locals, classes);
+  const rightStmts = codeGenExpr(expr.right, locals, classes);
+
+  return [...leftStmts, ...rightStmts, `(i32.eq)`];
 }

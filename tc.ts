@@ -1,4 +1,6 @@
+import { textChangeRangeIsUnchanged } from "typescript";
 import {
+  BinOp,
   ClassDef,
   Expr,
   FunDef,
@@ -412,6 +414,8 @@ export function tcExpr(
       return { ...e, arg, a: retType };
     }
     case "binop": {
+      if (e.op === BinOp.IS) return tcIs(e, env, funcs, classes);
+
       const [acceptedTypes, retType] = binopTypes.get(e.op);
       const left = tcExpr(e.left, env, funcs, classes);
       const right = tcExpr(e.right, env, funcs, classes);
@@ -500,4 +504,24 @@ export function tcLiteral(l: Literal<null>): Literal<Type> {
     case "none":
       return { ...l, a: "none" };
   }
+}
+function tcIs(
+  e: Expr<null>,
+  env: BodyEnv,
+  funcs: FuncEnv,
+  classes: ClassEnv
+): Expr<Type> {
+  if (e.tag !== "binop" || e.op !== BinOp.IS)
+    throw new Error("Logic error in tcIs");
+
+  const left = tcExpr(e.left, env, funcs, classes);
+  const right = tcExpr(e.right, env, funcs, classes);
+  const types = [left, right].map((o) => o.a);
+
+  // Neither argument can be "int" or "bool"!
+  if (types.includes("int") || types.includes("bool"))
+    throwWrongBinopArgs(e.op, left.a, right.a);
+
+  // it's easier to let the compiler handle the rest
+  return { ...e, left, right, a: "bool" };
 }
