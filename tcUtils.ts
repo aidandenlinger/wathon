@@ -293,3 +293,18 @@ export function throwNoAttr(typ: Type, attr: string): never {
     )}\``
   );
 }
+
+/**
+ * Throws an error when a method that doesn't exist on this class is being
+ * searched for.
+ *
+ * @param typ Type being accessed
+ * @param method The attribute that doesn't exist for that type
+ */
+export function throwNoMethod(typ: Type, method: string): never {
+  throw new Error(
+    `TYPE ERROR: There is no method named \`${method}\` in class \`${typeStr(
+      typ
+    )}\``
+  );
+}

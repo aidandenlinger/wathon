@@ -30,6 +30,7 @@ import {
   throwNoAttr,
   throwShadowClass,
   throwMethodNeedsSelf,
+  throwNoMethod,
 } from "./tcUtils";
 
 type BodyEnv = Map<string, Type>;
@@ -430,6 +431,32 @@ export function tcExpr(
       const fieldType = tcField(obj, e.field, classes);
 
       return { ...e, obj, a: fieldType };
+    }
+    case "method": {
+      const obj = tcExpr(e.obj, env, funcs, classes);
+      if (!isObject(obj.a)) throwNoMethod(obj.a, e.method);
+      const classInfo = classes.get(obj.a.class);
+      const method = classInfo.methods.find((m) => m.name === e.method);
+      if (method === undefined) throwNoMethod(obj.a, e.method);
+
+      // we DON'T need to check the first argument: it is the "self" argument.
+      // if "self" was the wrong type, we wouldn't be accessing this method in
+      // the first place, since we had to go through it to get here!
+      const [defArgs, ret] = [
+        method.params.map((p) => p.type).slice(1),
+        method.ret,
+      ];
+      const args = e.args.map((a) => tcExpr(a, env, funcs, classes));
+
+      if (defArgs.length != args.length)
+        throwWrongNumArgs(defArgs.length, args.length);
+
+      args.forEach((arg, i) => {
+        if (!assignableTo(arg.a, defArgs[i]))
+          throwNotExpectedTypeParam(defArgs[i], arg.a, i);
+      });
+
+      return { ...e, obj, args, a: ret };
     }
   }
 }
