@@ -547,6 +547,26 @@ describe("Method calls", () => {
       },
     ],
   });
+
+  assertParse("Parses stacked method calls", `x.y().test()`, {
+    ...blankPrgm,
+    body: [
+      {
+        tag: "expr",
+        expr: {
+          tag: "method",
+          obj: {
+            tag: "method",
+            obj: { tag: "id", name: "x" },
+            field: "y",
+            args: [],
+          },
+          field: "test",
+          args: [],
+        },
+      },
+    ],
+  });
 });
 
 // Questions: print_none?
