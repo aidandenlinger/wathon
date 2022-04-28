@@ -410,7 +410,9 @@ y.d = 2
 print(x.b + y.d)`,
     ["3"]
   );
+});
 
+describe("Classes hold methods", () => {
   assertParse(
     "Parse class with methods",
     `
@@ -499,6 +501,37 @@ class C(object):
     return None`,
     NONE
   );
+});
+
+describe("Method calls", () => {
+  assertParse("still parses regular calls", `test()`, {
+    ...blankPrgm,
+    body: [
+      {
+        tag: "expr",
+        expr: {
+          tag: "call",
+          name: "test",
+          args: [],
+        },
+      },
+    ],
+  });
+
+  assertParse("parses method calls", `x.test()`, {
+    ...blankPrgm,
+    body: [
+      {
+        tag: "expr",
+        expr: {
+          tag: "method",
+          obj: { tag: "id", name: "x" },
+          name: "test",
+          args: [],
+        },
+      },
+    ],
+  });
 });
 
 // Questions: print_none?
