@@ -130,7 +130,7 @@ export function traverseClassDef(c: TreeCursor, s: string): ClassDef<null> {
   }
 
   // Class must be non-empty
-  if (vars === [] && methods === []) throwParseError(c, s);
+  if (vars.length === 0 && methods.length === 0) throwParseError(c, s);
   c.parent();
   c.parent();
 
