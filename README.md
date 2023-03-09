@@ -1,4 +1,42 @@
-## Assignment 3
+# Wathon: A Python-to-WebAssembly Compiler _(cse231-pa3)_
+
+A ChocoPy-to-Wasm compiler written in Typescript for the browser.
+
+## Background
+This was an assignment for UCSD's [CSE231: Advanced Compiler Design, Spring
+2022, taught by Joe Politz.](https://ucsd-cse231-s22.github.io/) It compiles
+[ChocoPy](https://chocopy.org/) (a small subset of the [Python](https://www.python.org/)
+programming language) into [WebAssembly](https://webassembly.org/), a portible
+compilation target that can be run within the browser.
+
+## Install
+This repo uses the [`pnpm`](https://pnpm.io/) package manager. With `pnpm`
+installed:
+- clone the repository
+- run `pnpm i` to install the needed dependencies
+- run `pnpm build-web` to build the web interface in the `build` folder,
+  or run `pnpm build-cli` to build a cli program in the `cli` folder.
+
+## Usage
+
+### Web Interface
+Run `pnpm build-web` to build the web interface. This will create a `build`
+folder containing an `index.html` file and the needed javascript. To access
+this, I'd recommend going into the `build` folder and running
+`python -m http.server` if you have python3 installed on your system. This
+will launch a local web server, and you can access the compiler at
+`localhost:8000`.
+
+### Command Line Interface
+Run `pnpm build-cli` to build a command line program. This will generate files
+in the `cli` folder. Once in the `cli` folder, you can run commands such as
+`node node-main.js "1+1"` to compile the program "1+1" and see the compiled
+program in console output.
+
+### Tests
+Run `pnpm test` to run the test suite.
+
+## Assignment 3 Writeup
 
 **Due Friday, April 29th, at 11:59pm**
 
