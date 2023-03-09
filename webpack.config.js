@@ -1,6 +1,7 @@
 const path = require('path');
 module.exports = {
   entry: './webstart.ts',
+  mode: 'development',
   module: {
     rules: [
       {
