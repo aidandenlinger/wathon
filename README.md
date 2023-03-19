@@ -1,5 +1,7 @@
 # Wathon: A Python-to-WebAssembly Compiler _(cse231-pa3)_
 
+![](image.png)
+
 A ChocoPy-to-Wasm compiler written in Typescript for the browser.
 
 ## Background
