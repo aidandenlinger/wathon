@@ -2,7 +2,7 @@
 
 ![](image.png)
 
-A ChocoPy-to-Wasm compiler written in Typescript for the browser. [Try it out here!](https://aidandenlinger.github.io/cse231-pa3/)
+A ChocoPy-to-Wasm compiler written in Typescript for the browser. [Try it out here!](https://aidandenlinger.github.io/wathon/)
 
 ## Background
 This was an assignment for UCSD's [CSE231: Advanced Compiler Design, Spring
@@ -12,7 +12,7 @@ programming language) into [WebAssembly](https://webassembly.org/), a portible
 compilation target that can be run within the browser.
 
 ## Install
-It's accessible on Github Pages [here](https://aidandenlinger.github.io/cse231-pa3/), although you can also install and run it locally.
+It's accessible on Github Pages [here](https://aidandenlinger.github.io/wathon/), although you can also install and run it locally.
 
 This repo uses the [`pnpm`](https://pnpm.io/) package manager. With `pnpm`
 installed:
