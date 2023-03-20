@@ -27,7 +27,9 @@ installed:
 ## Usage
 
 ### Web Interface
-Run `pnpm build-web` to build the web interface. This will create a `build`
+It's accessible on Github Pages [here](https://aidandenlinger.github.io/wathon/)!
+
+To run it locally, run `pnpm build-web` to build the web interface. This will create a `build`
 folder containing an `index.html` file and the needed javascript. To access
 this, I'd recommend going into the `build` folder and running
 `python -m http.server` if you have python3 installed on your system. This
@@ -35,6 +37,10 @@ will launch a local web server, and you can access the compiler at
 `localhost:8000`.
 
 ### Command Line Interface
+
+> **Warning**
+> The CLI interface wasn't tested very much - it should work, but I'd highly suggest the web interace.
+
 Run `pnpm build-cli` to build a command line program. This will generate files
 in the `cli` folder. Once in the `cli` folder, you can run commands such as
 `node node-main.js "1+1"` to compile the program "1+1" and see the compiled
