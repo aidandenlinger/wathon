@@ -2,14 +2,17 @@
 
 ![](image.png)
 
-A ChocoPy-to-Wasm compiler written in Typescript for the browser. [Try it out here!](https://aidandenlinger.github.io/wathon/)
+A (subset of) ChocoPy-to-Wasm compiler written in Typescript for the browser. [Try it out here!](https://aidandenlinger.github.io/wathon/)
 
 ## Background
 This was an assignment for UCSD's [CSE231: Advanced Compiler Design, Spring
-2022, taught by Joe Politz.](https://ucsd-cse231-s22.github.io/) It compiles
-[ChocoPy](https://chocopy.org/) (a small subset of the [Python](https://www.python.org/)
+2022, taught by Joe Politz.](https://ucsd-cse231-s22.github.io/) It compiles a subset of
+[ChocoPy](https://chocopy.org/) (itself a small subset of the [Python](https://www.python.org/)
 programming language) into [WebAssembly](https://webassembly.org/), a portible
-compilation target that can be run within the browser.
+compilation target that can be run within the browser. The main features are basic
+classes and functions on ints and bools. See [the test suite](tests/pa3-visible.test.ts) for some
+example programs, and see [the language specification](#language-specification)
+to see the specific specification for this compiler.
 
 ## Install
 It's accessible on Github Pages [here](https://aidandenlinger.github.io/wathon/), although you can also install and run it locally.
